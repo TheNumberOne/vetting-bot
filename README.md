@@ -1,9 +1,3 @@
-<!--
-Copyright (c) 2020 Rosetta Roberts
-
-This program and source code are distributed under the Affero GPL.
- -->
-
 # Vetting Bot
 
 NOTE THAT THIS BOT IS CURRENTLY A WORK IN PROGRESS.
