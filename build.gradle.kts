@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2020 Rosetta Roberts
+ *
+ * This program and source code are distributed under the Affero GPL.
+ */
+
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
