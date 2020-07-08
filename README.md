@@ -127,9 +127,30 @@ These commands can be executed by moderators in addition to the custom vetting c
 
 ### Everyone commands
 
-* **TODO** `!ping`  
+* `!ping`  
   Ensures the bot is still running.
   
 ## Self Hosting (TODO)
+
+On linux, run
+```
+DISCORD_BOT_TOKEN=<your token> ./gradlew bootRun
+```
+
+### Configuration
+#### Privileged Gateway Intents
+* Server members intent
+#### Bot Permissions 
+268512342
+
+* Manage Roles
+* Manage Channels
+* Kick Members
+* Ban Members
+* View Channels
+* Send Messages
+* Manage Messages
+* Read Message History
+* Add Reactions 
 
 ## Development (TODO)

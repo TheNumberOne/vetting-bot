@@ -38,9 +38,13 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven { setUrl("https://jitpack.io") }
+    jcenter()
 }
 
 dependencies {
+    implementation("io.github.microutils:kotlin-logging:1.7.10")
+    implementation("com.discord4j:discord4j-core:3.1.0.RC3")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
