@@ -24,5 +24,5 @@ import org.springframework.stereotype.Component
 
 @Component
 class ExclamationPrefixService: PrefixService {
-    override fun get(server: Snowflake): String = "!"
+    override suspend fun get(server: Snowflake): String = "!"
 }

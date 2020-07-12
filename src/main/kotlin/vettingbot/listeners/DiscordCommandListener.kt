@@ -28,25 +28,16 @@ import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
 import reactor.kotlin.core.publisher.toFlux
 import vettingbot.command.Command
+import vettingbot.services.CommandsService
 import vettingbot.services.PrefixService
 
 private val logger = KotlinLogging.logger {}
 
 @Component
 class DiscordCommandListener(
-    commands: Publisher<List<Command>>,
+    private val commands: CommandsService,
     private val prefixService: PrefixService
 ) : DiscordEventListener<MessageCreateEvent> {
-    private val indexedCommands: Flux<Map<Snowflake?, Map<String, Command>>> = commands.toFlux().map {
-        it.groupBy { command -> command.guildId }
-            .mapValues { (_, commands) ->
-                commands.flatMap { command ->
-                    command.names.map { name ->
-                        name to command
-                    }
-                }.toMap()
-            }
-    }.cache(1)
 
     override suspend fun on(event: MessageCreateEvent) {
         val content = event.message.content
@@ -60,8 +51,7 @@ class DiscordCommandListener(
         val parts = commandText.split(' ', limit = 2)
         val commandName = if (parts.isNotEmpty()) parts[0] else ""
         val commandArguments = if (parts.size >= 2) parts[1] else ""
-        val commands = indexedCommands.awaitFirst()
-        val command = commands[server]?.get(commandName) ?: commands[null]?.get(commandName) ?: return
+        val command = commands.findCommand(server, commandName) ?: return
         if (!command.canExecute(server, member)) return
         try {
             logger.debug { "Executing command: $content" }

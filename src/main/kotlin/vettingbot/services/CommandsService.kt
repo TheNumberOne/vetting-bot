@@ -19,9 +19,9 @@
 
 package vettingbot.services
 
-import org.reactivestreams.Publisher
+import discord4j.common.util.Snowflake
 import vettingbot.command.Command
 
 interface CommandsService {
-    fun currentCommands(): Publisher<List<Command>>
+    suspend fun findCommand(guildId: Snowflake, commandName: String): Command?
 }

@@ -22,5 +22,5 @@ package vettingbot.services
 import discord4j.common.util.Snowflake
 
 interface PrefixService {
-    fun get(server: Snowflake): String
+    suspend fun get(server: Snowflake): String
 }

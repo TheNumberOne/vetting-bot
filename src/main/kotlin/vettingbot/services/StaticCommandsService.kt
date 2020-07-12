@@ -19,12 +19,22 @@
 
 package vettingbot.services
 
-import org.reactivestreams.Publisher
+import discord4j.common.util.Snowflake
 import org.springframework.stereotype.Component
-import reactor.kotlin.core.publisher.toMono
 import vettingbot.command.Command
 
 @Component
-class StaticCommandsService(private val commands: List<Command>): CommandsService {
-    override fun currentCommands(): Publisher<List<Command>> = commands.toMono()
+class StaticCommandsService(commands: List<Command>) : CommandsService {
+    private val indexed = commands.groupBy { it.guildId }
+        .mapValues { (_, commands) ->
+            commands.flatMap { command ->
+                command.names.map { name -> name to command }
+            }.toMap()
+        }
+
+    override suspend fun findCommand(guildId: Snowflake, commandName: String): Command? {
+        return indexed[guildId]?.get(commandName) ?: indexed[null]?.get(commandName)
+    }
+
+
 }

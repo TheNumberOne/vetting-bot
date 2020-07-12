@@ -19,24 +19,22 @@
 
 package vettingbot.command
 
-import discord4j.core.`object`.entity.channel.AllowedMentions
 import discord4j.core.event.domain.message.MessageCreateEvent
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.springframework.stereotype.Component
+import vettingbot.util.respond
 
 @Component
 class PingCommand: AbstractCommand("ping", "Check if the bot is running.") {
     override suspend fun run(message: MessageCreateEvent, args: String) {
-        message.message.channel.awaitFirstOrNull()?.createMessage {
-            it.apply {
-                setEmbed { embed ->
-                    embed.apply {
-                        setTitle("Ping")
-                        setDescription("Pong <@${message.member.get().id.asString()}>.")
-                    }
-                }
-                setAllowedMentions(AllowedMentions.builder().allowUser(message.member.get().id).build())
+        message.respond {
+            content("<@${message.member.get().id.asString()}>")
+            embed {
+                title("Ping")
+                description("Pong.")
             }
-        }?.awaitFirstOrNull()
+            allowedMentions {
+                member(message.member.get())
+            }
+        }
     }
 }
