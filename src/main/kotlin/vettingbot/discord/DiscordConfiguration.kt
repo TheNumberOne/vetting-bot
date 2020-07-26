@@ -17,7 +17,7 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.configuration
+package vettingbot.discord
 
 import discord4j.core.DiscordClient
 import discord4j.core.DiscordClientBuilder
@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Configuration
 import reactor.core.publisher.Mono
 
 @Configuration
-class DiscordClientConfigurator {
+class DiscordConfiguration {
     @Bean
     fun configureDiscordClient(@Value("\${discord.bot.token}") token: String): DiscordClient {
         val builder = DiscordClientBuilder.create(token)

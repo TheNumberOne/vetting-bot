@@ -17,11 +17,10 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.repositories
+package vettingbot.discord
 
-import org.springframework.data.repository.reactive.ReactiveCrudRepository
-import org.springframework.stereotype.Component
-import vettingbot.data.BotConfig
+import discord4j.core.GatewayDiscordClient
 
-@Component
-interface BotConfigRepository: ReactiveCrudRepository<BotConfig, Int>
+interface DiscordGatewaySubscriber {
+    fun subscribe(gateway: GatewayDiscordClient)
+}

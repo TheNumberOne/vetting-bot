@@ -17,25 +17,13 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.configuration
+package vettingbot.neo4j
 
 import discord4j.common.util.Snowflake
 import org.neo4j.driver.Value
 import org.neo4j.driver.internal.value.IntegerValue
-import org.neo4j.springframework.data.core.convert.Neo4jConversions
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.GenericConverter
-
-
-@Configuration
-class Neo4JConfiguration {
-    @Bean
-    fun neo4jConversions(): Neo4jConversions? {
-        return Neo4jConversions(setOf(SnowflakeConverter()))
-    }
-}
 
 class SnowflakeConverter : GenericConverter {
     override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> {
@@ -52,5 +40,4 @@ class SnowflakeConverter : GenericConverter {
             Snowflake.of((source as Value).asLong())
         }
     }
-
 }

@@ -17,24 +17,17 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.command
+package vettingbot.neo4j
 
-import discord4j.core.event.domain.message.MessageCreateEvent
-import org.springframework.stereotype.Component
-import vettingbot.util.nullable
-import vettingbot.util.respond
+import org.neo4j.springframework.data.core.convert.Neo4jConversions
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
-@Component
-class PingCommand: AbstractCommand("ping", "Check if the bot is running.") {
-    override suspend fun run(message: MessageCreateEvent, args: String) {
-        val latency = message.client.getGatewayClient(message.shardInfo.index).nullable?.responseTime ?: return
-        message.respond {
-            embed {
-                description("Latency: ${latency.toMillis()} ms")
-            }
-            allowedMentions {
-                member(message.member.get())
-            }
-        }
+
+@Configuration
+class Neo4JConfiguration {
+    @Bean
+    fun neo4jConversions(): Neo4jConversions? {
+        return Neo4jConversions(setOf(SnowflakeConverter()))
     }
 }

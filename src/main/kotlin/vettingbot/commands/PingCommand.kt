@@ -17,22 +17,25 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.services
+package vettingbot.commands
 
-import kotlinx.coroutines.reactive.awaitFirstOrNull
-import kotlinx.coroutines.reactive.awaitSingle
+import discord4j.core.event.domain.message.MessageCreateEvent
 import org.springframework.stereotype.Component
-import vettingbot.data.BotConfig
-import vettingbot.repositories.BotConfigRepository
+import vettingbot.command.AbstractCommand
+import vettingbot.util.nullable
+import vettingbot.util.respond
 
 @Component
-class BotConfigService(private val defaultBotConfig: BotConfig, private val repository: BotConfigRepository) {
-    private suspend fun getConfig(): BotConfig {
-        return repository.findById(BotConfig.INSTANCE_ID).awaitFirstOrNull()
-                ?: repository.save(defaultBotConfig).awaitSingle()
-    }
-
-    suspend fun getDefaultPrefix(): String {
-        return getConfig().defaultPrefix
+class PingCommand: AbstractCommand("ping", "Check if the bot is running.") {
+    override suspend fun run(message: MessageCreateEvent, args: String) {
+        val latency = message.client.getGatewayClient(message.shardInfo.index).nullable?.responseTime ?: return
+        message.respond {
+            embed {
+                description("Latency: ${latency.toMillis()} ms")
+            }
+            allowedMentions {
+                member(message.member.get())
+            }
+        }
     }
 }

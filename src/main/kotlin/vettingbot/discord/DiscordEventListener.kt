@@ -17,10 +17,26 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.gatewaysubscribers
+package vettingbot.discord
 
-import discord4j.core.GatewayDiscordClient
+import discord4j.core.event.domain.Event
+import java.lang.reflect.ParameterizedType
 
-interface DiscordGatewaySubscriber {
-    fun subscribe(gateway: GatewayDiscordClient)
+interface DiscordEventListener<T> where T : Event {
+    suspend fun on(event: T)
+
+    fun getEventType(): Class<T> {
+        val interfaces = javaClass.genericInterfaces
+        val type = interfaces.filterIsInstance<ParameterizedType>().single {
+            it.rawType == DiscordEventListener::class.java
+        }
+        val (argument) = type.actualTypeArguments
+
+        require(argument is Class<*>) {
+            "Type parameter of ${DiscordEventListener<*>::javaClass.name} for ${javaClass.name} must be a concrete type."
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        return argument as Class<T>
+    }
 }

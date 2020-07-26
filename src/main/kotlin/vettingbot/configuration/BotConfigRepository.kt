@@ -17,10 +17,11 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.repositories
+package vettingbot.configuration
 
-import discord4j.common.util.Snowflake
 import org.springframework.data.repository.reactive.ReactiveCrudRepository
-import vettingbot.data.GuildConfig
+import org.springframework.stereotype.Component
+import vettingbot.configuration.BotConfig
 
-interface GuildConfigRepository: ReactiveCrudRepository<GuildConfig, Snowflake>
+@Component
+interface BotConfigRepository: ReactiveCrudRepository<BotConfig, Int>

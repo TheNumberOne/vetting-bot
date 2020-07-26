@@ -17,16 +17,16 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.command
+package vettingbot.commands
 
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Member
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.rest.service.GuildService
 import discord4j.rest.util.Permission
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
-import vettingbot.services.GuildConfigService
+import vettingbot.command.AbstractCommand
+import vettingbot.guild.GuildConfigService
 import vettingbot.util.nullable
 import vettingbot.util.respond
 

@@ -17,20 +17,27 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.services
+package vettingbot.guild
 
+import discord4j.common.util.Snowflake
+import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
-import vettingbot.command.Command
+import vettingbot.configuration.BotConfigService
+import vettingbot.util.awaitCompletion
 
 @Component
-class CommandsService(commands: List<Command>) {
-    private val indexedCommands = commands.flatMap { command ->
-        command.names.map { name ->
-            name to command
-        }
-    }.toMap()
+class GuildConfigService(private val repo: GuildConfigRepository, private val botConfig: BotConfigService) {
+    suspend fun getGuildConfig(id: Snowflake): GuildConfig {
+        return repo.findById(id).awaitFirstOrNull()
+                ?: repo.save(GuildConfig(id, botConfig.getDefaultPrefix())).awaitSingle()
+    }
 
-    fun findCommand(commandName: String): Command? {
-        return indexedCommands[commandName]
+    suspend fun getPrefix(guildId: Snowflake): String {
+        return getGuildConfig(guildId).prefix
+    }
+
+    suspend fun setPrefix(guildId: Snowflake, prefix: String) {
+        getGuildConfig(guildId).copy(prefix = prefix).also { repo.save(it).awaitCompletion() }
     }
 }

@@ -17,21 +17,21 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.listeners
+package vettingbot.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
-import vettingbot.services.CommandsService
-import vettingbot.services.GuildConfigService
+import vettingbot.discord.DiscordEventListener
+import vettingbot.guild.GuildConfigService
 import vettingbot.util.nullable
 
 private val logger = KotlinLogging.logger {}
 
 @Component
-class DiscordCommandListener(
-    private val commands: CommandsService,
-    private val guildService: GuildConfigService
+class CommandListener(
+        private val commands: CommandsService,
+        private val guildService: GuildConfigService
 ) : DiscordEventListener<MessageCreateEvent> {
 
     override suspend fun on(event: MessageCreateEvent) {

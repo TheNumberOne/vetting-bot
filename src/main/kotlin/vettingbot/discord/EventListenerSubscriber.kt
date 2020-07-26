@@ -17,29 +17,24 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.gatewaysubscribers
+package vettingbot.discord
 
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.Event
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.mono
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
-import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.whenComplete
-import vettingbot.listeners.DiscordEventListener
-import vettingbot.listeners.getEventType
 
 private val logger = KotlinLogging.logger {}
 
 @Component
-class DiscordEventListenerSubscriber(
+class EventListenerSubscriber(
     private val listeners: List<DiscordEventListener<*>>
 ) : DiscordGatewaySubscriber {
 
     override fun subscribe(gateway: GatewayDiscordClient) {
         logger.debug { "Registering event listeners" }
-        val myTypes = listeners.groupBy { getEventType(it) }
+        val myTypes = listeners.groupBy { it.getEventType() }
         myTypes.forEach { (eventType, eventListeners) ->
             gateway.on(eventType).flatMap { event ->
                 mono {

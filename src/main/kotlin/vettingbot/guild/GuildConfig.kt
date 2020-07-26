@@ -17,22 +17,11 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.data
+package vettingbot.guild
 
+import discord4j.common.util.Snowflake
+import org.neo4j.springframework.data.core.schema.Id
 import org.neo4j.springframework.data.core.schema.Node
-import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.boot.context.properties.ConstructorBinding
-import org.springframework.data.annotation.Id
 
-@ConstructorBinding
-@ConfigurationProperties(prefix = "bot")
 @Node
-data class BotConfig(
-        val defaultPrefix: String,
-        // Since there is only one bot, we only use one bot config.
-        @Id val id: Int = INSTANCE_ID
-) {
-    companion object {
-        const val INSTANCE_ID = 1
-    }
-}
+data class GuildConfig(@Id val id: Snowflake, val prefix: String)

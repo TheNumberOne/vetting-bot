@@ -17,27 +17,19 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.listeners
+package vettingbot.command
 
-import discord4j.core.event.domain.Event
-import java.lang.reflect.ParameterizedType
+import org.springframework.stereotype.Component
 
-interface DiscordEventListener<in T> where T : Event {
-    suspend fun on(event: T)
-}
+@Component
+class CommandsService(commands: List<Command>) {
+    private val indexedCommands = commands.flatMap { command ->
+        command.names.map { name ->
+            name to command
+        }
+    }.toMap()
 
-fun getEventType(eventImpl: DiscordEventListener<*>): Class<out Event> {
-    val clazz = eventImpl.javaClass
-    val interfaces = clazz.genericInterfaces
-    val type = interfaces.filterIsInstance<ParameterizedType>().single {
-        it.rawType == DiscordEventListener::class.java
+    fun findCommand(commandName: String): Command? {
+        return indexedCommands[commandName]
     }
-    val (argument) = type.actualTypeArguments
-
-    require(argument is Class<*>) {
-        "Type parameter of ${DiscordEventListener<*>::javaClass.name} for ${clazz.name} must be a concrete type."
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    return argument as Class<out Event>
 }

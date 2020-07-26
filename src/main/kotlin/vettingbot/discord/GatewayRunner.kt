@@ -17,16 +17,18 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.runners
+package vettingbot.discord
 
 import discord4j.core.GatewayDiscordClient
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
-import vettingbot.gatewaysubscribers.DiscordGatewaySubscriber
 
+/**
+ * Keeps the application alive while the gateway is active.
+ */
 @Component
-class SubscribeToGateway(
+class GatewayRunner(
     private val gatewayMono: Mono<GatewayDiscordClient>,
     private val subscribers: List<DiscordGatewaySubscriber>
 ) : CommandLineRunner {

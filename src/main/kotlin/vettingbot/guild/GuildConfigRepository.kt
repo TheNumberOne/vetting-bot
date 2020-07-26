@@ -17,17 +17,9 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot
+package vettingbot.guild
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.boot.runApplication
-import vettingbot.configuration.BotConfig
+import discord4j.common.util.Snowflake
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
 
-@EnableConfigurationProperties(BotConfig::class)
-@SpringBootApplication
-class VettingBot
-
-fun main(args: Array<String>) {
-    runApplication<VettingBot>(*args)
-}
+interface GuildConfigRepository: ReactiveCrudRepository<GuildConfig, Snowflake>
