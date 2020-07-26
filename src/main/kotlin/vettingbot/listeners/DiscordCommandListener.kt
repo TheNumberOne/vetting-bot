@@ -19,31 +19,26 @@
 
 package vettingbot.listeners
 
-import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.message.MessageCreateEvent
-import kotlinx.coroutines.reactive.awaitFirst
 import mu.KotlinLogging
-import org.reactivestreams.Publisher
 import org.springframework.stereotype.Component
-import reactor.core.publisher.Flux
-import reactor.kotlin.core.publisher.toFlux
-import vettingbot.command.Command
 import vettingbot.services.CommandsService
-import vettingbot.services.PrefixService
+import vettingbot.services.GuildConfigService
+import vettingbot.util.nullable
 
 private val logger = KotlinLogging.logger {}
 
 @Component
 class DiscordCommandListener(
     private val commands: CommandsService,
-    private val prefixService: PrefixService
+    private val guildService: GuildConfigService
 ) : DiscordEventListener<MessageCreateEvent> {
 
     override suspend fun on(event: MessageCreateEvent) {
         val content = event.message.content
-        val server = event.guildId.orElse(null) ?: return
-        val prefix = prefixService.get(server)
-        val member = event.member.orElse(null) ?: return
+        val server = event.guildId.nullable ?: return
+        val prefix = guildService.getPrefix(server)
+        val member = event.member.nullable ?: return
         if (!content.startsWith(prefix)) {
             return
         }
@@ -51,7 +46,7 @@ class DiscordCommandListener(
         val parts = commandText.split(' ', limit = 2)
         val commandName = if (parts.isNotEmpty()) parts[0] else ""
         val commandArguments = if (parts.size >= 2) parts[1] else ""
-        val command = commands.findCommand(server, commandName) ?: return
+        val command = commands.findCommand(commandName) ?: return
         if (!command.canExecute(server, member)) return
         try {
             logger.debug { "Executing command: $content" }

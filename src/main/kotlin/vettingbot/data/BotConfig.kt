@@ -17,10 +17,22 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.services
+package vettingbot.data
 
-import discord4j.common.util.Snowflake
+import org.neo4j.springframework.data.core.schema.Node
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.ConstructorBinding
+import org.springframework.data.annotation.Id
 
-interface PrefixService {
-    suspend fun get(server: Snowflake): String
+@ConstructorBinding
+@ConfigurationProperties(prefix = "bot")
+@Node
+data class BotConfig(
+        val defaultPrefix: String,
+        // Since there is only one bot, we only use one bot config.
+        @Id val id: Int = INSTANCE_ID
+) {
+    companion object {
+        const val INSTANCE_ID = 1
+    }
 }

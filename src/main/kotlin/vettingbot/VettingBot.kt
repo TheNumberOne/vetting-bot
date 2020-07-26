@@ -20,8 +20,13 @@
 package vettingbot
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
+import reactor.tools.agent.ReactorDebugAgent
+import vettingbot.data.BotConfig
 
+@EnableConfigurationProperties(BotConfig::class)
 @SpringBootApplication
 class VettingBot
 

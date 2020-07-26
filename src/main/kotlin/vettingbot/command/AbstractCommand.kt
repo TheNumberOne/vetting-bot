@@ -26,19 +26,18 @@ import discord4j.core.spec.MessageCreateSpec
 
 @Suppress("SpringJavaConstructorAutowiringInspection")
 open class AbstractCommand(
-    final override val names: List<String>,
-    final override val quickHelp: String,
-    final override val guildId: Snowflake? = null,
-    final override val subCommands: List<Command> = emptyList()
+        final override val names: List<String>,
+        final override val quickHelp: String,
+        final override val subCommands: List<Command> = emptyList()
 ) : Command {
     constructor(
-        name: String,
-        quickHelp: String,
-        server: Snowflake? = null,
-        subCommands: List<Command> = emptyList()
+            name: String,
+            quickHelp: String,
+            subCommands: List<Command> = emptyList()
     ) : this(
-        listOf(name),
-        quickHelp, server, subCommands
+            listOf(name),
+            quickHelp,
+            subCommands
     ) {
     }
 

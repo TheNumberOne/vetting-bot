@@ -17,12 +17,10 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.services
+package vettingbot.repositories
 
 import discord4j.common.util.Snowflake
-import org.springframework.stereotype.Component
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
+import vettingbot.data.GuildConfig
 
-@Component
-class ExclamationPrefixService: PrefixService {
-    override suspend fun get(server: Snowflake): String = "!"
-}
+interface GuildConfigRepository: ReactiveCrudRepository<GuildConfig, Snowflake>

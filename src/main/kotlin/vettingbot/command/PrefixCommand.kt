@@ -19,21 +19,33 @@
 
 package vettingbot.command
 
+import discord4j.common.util.Snowflake
+import discord4j.core.`object`.entity.Member
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.rest.service.GuildService
+import discord4j.rest.util.Permission
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
+import vettingbot.services.GuildConfigService
 import vettingbot.util.nullable
 import vettingbot.util.respond
 
 @Component
-class PingCommand: AbstractCommand("ping", "Check if the bot is running.") {
+class PrefixCommand(private val guildService: GuildConfigService) : AbstractCommand("prefix", "Set the prefix of the bot") {
+    override suspend fun canExecute(guildId: Snowflake, member: Member): Boolean {
+        return member.basePermissions.awaitSingle().contains(Permission.ADMINISTRATOR)
+    }
+
     override suspend fun run(message: MessageCreateEvent, args: String) {
-        val latency = message.client.getGatewayClient(message.shardInfo.index).nullable?.responseTime ?: return
+        val guild = message.guildId.nullable ?: return
+        val oldPrefix = guildService.getPrefix(guild)
+        guildService.setPrefix(guild, args)
+
         message.respond {
             embed {
-                description("Latency: ${latency.toMillis()} ms")
-            }
-            allowedMentions {
-                member(message.member.get())
+                description("Changed prefix.")
+                field("Before", oldPrefix, true)
+                field("After", args, true)
             }
         }
     }

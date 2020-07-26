@@ -17,20 +17,12 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.services
+package vettingbot.util
 
-import org.springframework.stereotype.Component
-import vettingbot.command.Command
+import kotlinx.coroutines.reactive.awaitFirstOrNull
+import org.reactivestreams.Publisher
+import reactor.core.publisher.Mono
 
-@Component
-class CommandsService(commands: List<Command>) {
-    private val indexedCommands = commands.flatMap { command ->
-        command.names.map { name ->
-            name to command
-        }
-    }.toMap()
-
-    fun findCommand(commandName: String): Command? {
-        return indexedCommands[commandName]
-    }
+suspend fun <T> Publisher<T>.awaitCompletion() {
+    Mono.`when`(this).awaitFirstOrNull()
 }

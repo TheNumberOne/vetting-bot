@@ -22,11 +22,10 @@ package vettingbot.util
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.Message
-import discord4j.core.`object`.entity.channel.AllowedMentions
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.core.spec.MessageCreateSpec
-import kotlinx.coroutines.reactive.awaitFirstOrNull
+import discord4j.rest.util.AllowedMentions
 import kotlinx.coroutines.reactive.awaitSingle
 
 class MessageCreateSpecDsl(private val spec: MessageCreateSpec) {
@@ -49,6 +48,9 @@ class EmbedCreateSpecDsl(private val spec: EmbedCreateSpec) {
     }
     fun description(value: String) {
         spec.setDescription(value)
+    }
+    fun field(key: String, value: String, inline: Boolean) {
+        spec.addField(key, value, inline)
     }
 }
 

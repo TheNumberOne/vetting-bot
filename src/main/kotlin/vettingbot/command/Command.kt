@@ -32,11 +32,6 @@ interface Command {
 
     val quickHelp: String
 
-    /**
-     * Null specifies that it applies to all servers.
-     */
-    val guildId: Snowflake?
-
     val subCommands: List<Command>
 
     suspend fun displayHelp(): (MessageCreateSpec) -> Unit

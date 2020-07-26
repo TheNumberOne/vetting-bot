@@ -17,24 +17,8 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.services
+package vettingbot.util
 
-import discord4j.common.util.Snowflake
-import org.springframework.stereotype.Component
-import vettingbot.command.Command
+import java.util.*
 
-@Component
-class StaticCommandsService(commands: List<Command>) : CommandsService {
-    private val indexed = commands.groupBy { it.guildId }
-        .mapValues { (_, commands) ->
-            commands.flatMap { command ->
-                command.names.map { name -> name to command }
-            }.toMap()
-        }
-
-    override suspend fun findCommand(guildId: Snowflake, commandName: String): Command? {
-        return indexed[guildId]?.get(commandName) ?: indexed[null]?.get(commandName)
-    }
-
-
-}
+val <T> Optional<T>.nullable: T? get() = orElse(null)

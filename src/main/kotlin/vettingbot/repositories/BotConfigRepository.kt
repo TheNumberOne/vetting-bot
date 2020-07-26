@@ -17,20 +17,11 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.services
+package vettingbot.repositories
 
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
 import org.springframework.stereotype.Component
-import vettingbot.command.Command
+import vettingbot.data.BotConfig
 
 @Component
-class CommandsService(commands: List<Command>) {
-    private val indexedCommands = commands.flatMap { command ->
-        command.names.map { name ->
-            name to command
-        }
-    }.toMap()
-
-    fun findCommand(commandName: String): Command? {
-        return indexedCommands[commandName]
-    }
-}
+interface BotConfigRepository: ReactiveCrudRepository<BotConfig, Int>

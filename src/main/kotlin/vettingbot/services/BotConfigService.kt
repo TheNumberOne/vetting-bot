@@ -19,18 +19,20 @@
 
 package vettingbot.services
 
+import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
-import vettingbot.command.Command
+import vettingbot.data.BotConfig
+import vettingbot.repositories.BotConfigRepository
 
 @Component
-class CommandsService(commands: List<Command>) {
-    private val indexedCommands = commands.flatMap { command ->
-        command.names.map { name ->
-            name to command
-        }
-    }.toMap()
+class BotConfigService(private val defaultBotConfig: BotConfig, private val repository: BotConfigRepository) {
+    private suspend fun getConfig(): BotConfig {
+        return repository.findById(BotConfig.INSTANCE_ID).awaitFirstOrNull()
+                ?: repository.save(defaultBotConfig).awaitSingle()
+    }
 
-    fun findCommand(commandName: String): Command? {
-        return indexedCommands[commandName]
+    suspend fun getDefaultPrefix(): String {
+        return getConfig().defaultPrefix
     }
 }

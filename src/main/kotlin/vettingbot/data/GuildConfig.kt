@@ -17,20 +17,11 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.services
+package vettingbot.data
 
-import org.springframework.stereotype.Component
-import vettingbot.command.Command
+import discord4j.common.util.Snowflake
+import org.neo4j.springframework.data.core.schema.Id
+import org.neo4j.springframework.data.core.schema.Node
 
-@Component
-class CommandsService(commands: List<Command>) {
-    private val indexedCommands = commands.flatMap { command ->
-        command.names.map { name ->
-            name to command
-        }
-    }.toMap()
-
-    fun findCommand(commandName: String): Command? {
-        return indexedCommands[commandName]
-    }
-}
+@Node
+data class GuildConfig(@Id val id: Snowflake, val prefix: String)

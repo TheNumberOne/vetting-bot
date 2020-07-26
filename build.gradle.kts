@@ -20,8 +20,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.3.1.RELEASE"
+    id("org.springframework.boot") version "2.3.2.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
+    id("com.github.ben-manes.versions") version "0.29.0"
     kotlin("jvm") version "1.3.72"
     kotlin("plugin.spring") version "1.3.72"
 }
@@ -43,9 +44,12 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.microutils:kotlin-logging:1.7.10")
-    implementation("com.discord4j:discord4j-core:3.1.0.RC3")
-    implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+    runtimeOnly("org.slf4j:slf4j-simple:1.7.30")
+    implementation("net.bytebuddy:byte-buddy-agent:1.10.13")
+    implementation("io.projectreactor:reactor-tools")
+    implementation("org.neo4j.springframework.data:spring-data-neo4j-rx-spring-boot-starter:1.1.1")
+    implementation("io.github.microutils:kotlin-logging:1.8.3")
+    implementation("com.discord4j:discord4j-core:3.1.0")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
