@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
 import vettingbot.guild.GuildConfigService
 import vettingbot.util.nullable
-import vettingbot.util.respond
+import vettingbot.util.respondMessage
 
 @Component
 class PrefixCommand(private val guildService: GuildConfigService) : AbstractCommand("prefix", "Set the prefix of the bot") {
@@ -41,7 +41,7 @@ class PrefixCommand(private val guildService: GuildConfigService) : AbstractComm
         val oldPrefix = guildService.getPrefix(guild)
         guildService.setPrefix(guild, args)
 
-        message.respond {
+        message.respondMessage {
             embed {
                 description("Changed prefix.")
                 field("Before", oldPrefix, true)

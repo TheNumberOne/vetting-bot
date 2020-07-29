@@ -22,7 +22,7 @@ package vettingbot.command
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Member
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.spec.MessageCreateSpec
+import discord4j.core.spec.EmbedCreateSpec
 
 interface Command {
     /**
@@ -34,7 +34,7 @@ interface Command {
 
     val subCommands: List<Command>
 
-    suspend fun displayHelp(): (MessageCreateSpec) -> Unit
+    suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit
 
     suspend fun canExecute(guildId: Snowflake, member: Member): Boolean
 

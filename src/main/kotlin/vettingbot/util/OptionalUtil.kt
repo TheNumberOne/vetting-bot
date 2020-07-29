@@ -19,6 +19,8 @@
 
 package vettingbot.util
 
+import discord4j.discordjson.possible.Possible
 import java.util.*
 
 val <T> Optional<T>.nullable: T? get() = orElse(null)
+val <T> Possible<T>.nullable: T? get() = if (isAbsent) null else get()

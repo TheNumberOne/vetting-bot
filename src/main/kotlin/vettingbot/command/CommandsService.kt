@@ -22,7 +22,7 @@ package vettingbot.command
 import org.springframework.stereotype.Component
 
 @Component
-class CommandsService(commands: List<Command>) {
+class CommandsService(val commands: List<Command>) {
     private val indexedCommands = commands.flatMap { command ->
         command.names.map { name ->
             name to command

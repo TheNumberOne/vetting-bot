@@ -22,7 +22,7 @@ package vettingbot.command
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Member
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.spec.MessageCreateSpec
+import discord4j.core.spec.EmbedCreateSpec
 
 @Suppress("SpringJavaConstructorAutowiringInspection")
 open class AbstractCommand(
@@ -41,7 +41,7 @@ open class AbstractCommand(
     ) {
     }
 
-    override suspend fun displayHelp(): (MessageCreateSpec) -> Unit = { }
+    override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = { }
 
     override suspend fun canExecute(guildId: Snowflake, member: Member): Boolean = true
 

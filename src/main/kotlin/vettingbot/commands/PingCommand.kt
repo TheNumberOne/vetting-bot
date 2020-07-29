@@ -23,19 +23,16 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
 import vettingbot.util.nullable
-import vettingbot.util.respond
+import vettingbot.util.respondEmbed
+import vettingbot.util.respondMessage
 
 @Component
 class PingCommand: AbstractCommand("ping", "Check if the bot is running.") {
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val latency = message.client.getGatewayClient(message.shardInfo.index).nullable?.responseTime ?: return
-        message.respond {
-            embed {
-                description("Latency: ${latency.toMillis()} ms")
-            }
-            allowedMentions {
-                member(message.member.get())
-            }
+
+        message.respondEmbed {
+            description("Latency: ${latency.toMillis()} ms")
         }
     }
 }

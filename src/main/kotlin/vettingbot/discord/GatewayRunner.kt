@@ -22,21 +22,45 @@ package vettingbot.discord
 import discord4j.core.GatewayDiscordClient
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Component
+import reactor.core.Disposable
+import reactor.core.Disposables
 import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Keeps the application alive while the gateway is active.
  */
 @Component
 class GatewayRunner(
-    private val gatewayMono: Mono<GatewayDiscordClient>,
-    private val subscribers: List<DiscordGatewaySubscriber>
+        private val gatewayMono: Mono<GatewayDiscordClient>,
+        private val subscribers: List<DiscordGatewaySubscriber>
 ) : CommandLineRunner {
+    private val cancel: AtomicReference<Disposable?> = AtomicReference()
+
     override fun run(vararg args: String?) {
-        gatewayMono.doOnNext { gateway ->
+        start()
+        readLine()
+        stop()
+    }
+
+    fun start() {
+        val scheduler = Schedulers.newParallel(
+                "Vetting Bot",
+                Schedulers.DEFAULT_POOL_SIZE,
+                false
+        )
+
+        val cancelMono = gatewayMono.doOnNext { gateway ->
             subscribers.forEach {
                 it.subscribe(gateway)
             }
-        }.flatMap { it.onDisconnect() }.block()
+        }.flatMap { it.onDisconnect() }.subscribeOn(scheduler).subscribe()
+
+        cancel.getAndSet(Disposables.composite(scheduler, cancelMono))?.dispose()
+    }
+
+    fun stop() {
+        cancel.getAndSet(null)?.dispose()
     }
 }
