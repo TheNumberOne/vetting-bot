@@ -24,4 +24,9 @@ import org.neo4j.springframework.data.core.schema.Id
 import org.neo4j.springframework.data.core.schema.Node
 
 @Node
-data class GuildConfig(@Id val id: Snowflake, val prefix: String)
+data class GuildConfig(
+        @Id val id: Snowflake,
+        val prefix: String,
+        val categoryName: String,
+        val category: Snowflake? = null
+)

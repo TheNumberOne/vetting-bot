@@ -21,6 +21,7 @@ package vettingbot.util
 
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Message
+import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.core.spec.MessageCreateSpec
@@ -44,11 +45,19 @@ inline fun embedDsl(dsl: EmbedCreateSpecDsl.() -> Unit): EmbedCreateTemplate {
 }
 
 suspend inline fun MessageCreateEvent.respondMessage(dsl: MessageCreateSpecDsl.() -> Unit): Message {
-    return message.channel.awaitSingle().createMessage(messageDsl(dsl)).awaitSingle()
+    return message.channel.awaitSingle().sendMessage(dsl)
+}
+
+suspend inline fun MessageChannel.sendMessage(dsl: MessageCreateSpecDsl.() -> Unit): Message {
+    return createMessage(messageDsl(dsl)).awaitSingle()
 }
 
 suspend inline fun MessageCreateEvent.respondEmbed(dsl: EmbedCreateSpecDsl.() -> Unit): Message {
-    return message.channel.awaitSingle().createEmbed(embedDsl(dsl)).awaitSingle()
+    return message.channel.awaitSingle().sendEmbed(dsl)
+}
+
+suspend inline fun MessageChannel.sendEmbed(dsl: EmbedCreateSpecDsl.() -> Unit): Message {
+    return createEmbed(embedDsl(dsl)).awaitSingle()
 }
 
 private fun MessageCreateSpec.fromData(request: MultipartRequest) {

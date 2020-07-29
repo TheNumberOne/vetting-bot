@@ -17,24 +17,21 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.configuration
+package vettingbot.commands
 
-import kotlinx.coroutines.reactive.awaitFirstOrNull
-import kotlinx.coroutines.reactive.awaitSingle
+import discord4j.core.event.domain.message.MessageCreateEvent
 import org.springframework.stereotype.Component
+import vettingbot.command.AbstractCommand
+import vettingbot.util.respondEmbed
 
 @Component
-class BotConfigService(private val defaultBotConfig: BotConfig, private val repository: BotConfigRepository) {
-    private suspend fun getConfig(): BotConfig {
-        return repository.findById(BotConfig.INSTANCE_ID).awaitFirstOrNull()
-                ?: repository.save(defaultBotConfig).awaitSingle()
-    }
-
-    suspend fun getDefaultPrefix(): String {
-        return getConfig().defaultPrefix
-    }
-
-    suspend fun getDefaultCategoryName(): String {
-        return getConfig().defaultCategoryName
+class InviteCommand: AbstractCommand("invite", "Create a link to invite this bot to a server.") {
+    override suspend fun run(message: MessageCreateEvent, args: String) {
+        val clientId = message.client.selfId.asString()
+        val permissions = 268512342
+        val url = "https://discord.com/api/oauth2/authorize?client_id=$clientId&permissions=$permissions&scope=bot"
+        message.respondEmbed {
+            description("[Invitation link]($url)")
+        }
     }
 }

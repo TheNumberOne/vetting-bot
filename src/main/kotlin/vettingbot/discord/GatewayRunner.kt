@@ -21,6 +21,8 @@ package vettingbot.discord
 
 import discord4j.core.GatewayDiscordClient
 import org.springframework.boot.CommandLineRunner
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import reactor.core.Disposable
 import reactor.core.Disposables
@@ -32,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Keeps the application alive while the gateway is active.
  */
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE)
 class GatewayRunner(
         private val gatewayMono: Mono<GatewayDiscordClient>,
         private val subscribers: List<DiscordGatewaySubscriber>

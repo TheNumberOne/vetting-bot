@@ -29,6 +29,7 @@ import org.springframework.data.annotation.Id
 @Node
 data class BotConfig(
         val defaultPrefix: String,
+        val defaultCategoryName: String,
         // Since there is only one bot, we only use one bot config.
         @Id val id: Int = INSTANCE_ID
 ) {

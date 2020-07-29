@@ -17,24 +17,19 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.configuration
+package vettingbot.joining
 
-import kotlinx.coroutines.reactive.awaitFirstOrNull
+import discord4j.core.event.domain.guild.MemberLeaveEvent
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
+import vettingbot.discord.DiscordEventListener
+import vettingbot.util.awaitCompletion
 
 @Component
-class BotConfigService(private val defaultBotConfig: BotConfig, private val repository: BotConfigRepository) {
-    private suspend fun getConfig(): BotConfig {
-        return repository.findById(BotConfig.INSTANCE_ID).awaitFirstOrNull()
-                ?: repository.save(defaultBotConfig).awaitSingle()
-    }
-
-    suspend fun getDefaultPrefix(): String {
-        return getConfig().defaultPrefix
-    }
-
-    suspend fun getDefaultCategoryName(): String {
-        return getConfig().defaultCategoryName
+class MemberLeaveListener(private val vettingChannelCreator: VettingChannelService) : DiscordEventListener<MemberLeaveEvent> {
+    override suspend fun on(event: MemberLeaveEvent) {
+        vettingChannelCreator.findChannelsFor(event.guild.awaitSingle(), event.user.id)
+                .collect { it.delete().awaitCompletion() }
     }
 }

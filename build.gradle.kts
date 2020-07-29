@@ -44,8 +44,10 @@ repositories {
 }
 
 dependencies {
-    runtimeOnly("org.slf4j:slf4j-simple:1.7.30")
-    implementation("net.bytebuddy:byte-buddy-agent:1.10.13")
+    implementation("org.liquigraph:liquigraph-core:4.0.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    runtimeOnly("org.slf4j:slf4j-simple")
+    implementation("net.bytebuddy:byte-buddy-agent")
     implementation("io.projectreactor:reactor-tools")
     implementation("org.neo4j.springframework.data:spring-data-neo4j-rx-spring-boot-starter:1.1.1")
     implementation("io.github.microutils:kotlin-logging:1.8.3")

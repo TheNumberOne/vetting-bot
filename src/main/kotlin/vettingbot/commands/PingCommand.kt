@@ -29,7 +29,10 @@ import vettingbot.util.respondMessage
 @Component
 class PingCommand: AbstractCommand("ping", "Check if the bot is running.") {
     override suspend fun run(message: MessageCreateEvent, args: String) {
-        val latency = message.client.getGatewayClient(message.shardInfo.index).nullable?.responseTime ?: return
+        val latency = message.client
+                .getGatewayClient(message.shardInfo.index)
+                .nullable
+                ?.responseTime ?: return
 
         message.respondEmbed {
             description("Latency: ${latency.toMillis()} ms")

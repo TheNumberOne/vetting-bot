@@ -17,24 +17,23 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.configuration
+package vettingbot.joining
 
-import kotlinx.coroutines.reactive.awaitFirstOrNull
-import kotlinx.coroutines.reactive.awaitSingle
+import discord4j.core.event.domain.guild.MemberJoinEvent
 import org.springframework.stereotype.Component
+import vettingbot.discord.DiscordEventListener
+import vettingbot.util.sendMessage
 
 @Component
-class BotConfigService(private val defaultBotConfig: BotConfig, private val repository: BotConfigRepository) {
-    private suspend fun getConfig(): BotConfig {
-        return repository.findById(BotConfig.INSTANCE_ID).awaitFirstOrNull()
-                ?: repository.save(defaultBotConfig).awaitSingle()
-    }
+class MemberJoinListener(private val channelCreator: VettingChannelService) : DiscordEventListener<MemberJoinEvent> {
+    override suspend fun on(event: MemberJoinEvent) {
+        val channel = channelCreator.getOrCreateChannelFor(event.member)
 
-    suspend fun getDefaultPrefix(): String {
-        return getConfig().defaultPrefix
-    }
-
-    suspend fun getDefaultCategoryName(): String {
-        return getConfig().defaultCategoryName
+        channel.sendMessage {
+            content(event.member.mention)
+            embed {
+                description("Welcome to the server ${event.member.mention}! Please wait for verification before you access the rest of the server.")
+            }
+        }
     }
 }
