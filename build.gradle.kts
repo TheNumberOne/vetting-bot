@@ -20,7 +20,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.3.2.RELEASE"
+    id("org.springframework.boot") version "2.4.0-M1"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("com.github.ben-manes.versions") version "0.29.0"
     kotlin("jvm") version "1.3.72"
@@ -38,29 +38,30 @@ configurations {
 }
 
 repositories {
+    maven { setUrl("https://oss.sonatype.org/content/repositories/snapshots") }
+    maven { setUrl("https://repo.spring.io/milestone") }
     mavenCentral()
     maven { setUrl("https://jitpack.io") }
     jcenter()
 }
 
 dependencies {
+    implementation(platform("io.projectreactor:reactor-bom:2020.0.0-M1"))
+    implementation("com.discord4j:discord4j-core:3.2.0-SNAPSHOT")
     implementation("org.liquigraph:liquigraph-core:4.0.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
-    runtimeOnly("org.slf4j:slf4j-simple")
     implementation("net.bytebuddy:byte-buddy-agent")
-    implementation("io.projectreactor:reactor-tools")
     implementation("org.neo4j.springframework.data:spring-data-neo4j-rx-spring-boot-starter:1.1.1")
     implementation("io.github.microutils:kotlin-logging:1.8.3")
-    implementation("com.discord4j:discord4j-core:3.1.0")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    implementation("org.springframework.boot:spring-boot-starter-logging")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
-    testImplementation("io.projectreactor:reactor-test")
 }
 
 tasks.withType<Test> {
@@ -69,11 +70,7 @@ tasks.withType<Test> {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict")
+        freeCompilerArgs = listOf("-Xjsr305=strict", "-Xinline-classes")
         jvmTarget = "11"
     }
-}
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    freeCompilerArgs = listOf("-Xinline-classes")
 }

@@ -17,15 +17,9 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.guild
+package vettingbot.util
 
-import discord4j.common.util.Snowflake
-import org.neo4j.springframework.data.core.schema.Id
-import org.neo4j.springframework.data.core.schema.Node
+class WrappedException(e: Exception) : RuntimeException(e)
 
-@Node
-data class GuildConfig(
-        @Id val guildId: Snowflake,
-        val prefix: String,
-        val enabled: Boolean = false
-)
+// This muuuust be kept on one line in order for useful stacktraces.
+inline fun <T> wrapExceptions(f: () -> T): T = try { f() } catch (e: Exception) { if (e is WrappedException) throw  e else throw WrappedException(e) }

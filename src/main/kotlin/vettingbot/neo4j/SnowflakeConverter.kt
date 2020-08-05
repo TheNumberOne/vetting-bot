@@ -28,8 +28,8 @@ import org.springframework.core.convert.converter.GenericConverter
 class SnowflakeConverter : GenericConverter {
     override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> {
         return setOf(
-                GenericConverter.ConvertiblePair(Snowflake::class.java, Value::class.java),
-                GenericConverter.ConvertiblePair(Value::class.java, Snowflake::class.java)
+            GenericConverter.ConvertiblePair(Snowflake::class.java, Value::class.java),
+            GenericConverter.ConvertiblePair(Value::class.java, Snowflake::class.java)
         )
     }
 

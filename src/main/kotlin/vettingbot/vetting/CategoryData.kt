@@ -17,15 +17,24 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.guild
+package vettingbot.vetting
 
 import discord4j.common.util.Snowflake
+import discord4j.core.`object`.entity.channel.Category
 import org.neo4j.springframework.data.core.schema.Id
 import org.neo4j.springframework.data.core.schema.Node
+import org.neo4j.springframework.data.core.schema.Relationship
+import org.springframework.data.annotation.PersistenceConstructor
 
 @Node
-data class GuildConfig(
-        @Id val guildId: Snowflake,
-        val prefix: String,
-        val enabled: Boolean = false
-)
+data class CategoryData @PersistenceConstructor constructor(
+    // category id
+    @Id val id: Long,
+    val guildId: Snowflake,
+    @Relationship("PARENT_OF")
+    val vettingChannels: Set<VettingChannel> = emptySet()
+) {
+    constructor(channelId: Snowflake, guildId: Snowflake, vettingChannels: Set<VettingChannel> = emptySet()):
+            this(channelId.asLong(), guildId, vettingChannels)
+    constructor(category: Category): this(category.id, category.guildId)
+}

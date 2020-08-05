@@ -17,15 +17,8 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.guild
+package vettingbot.util
 
 import discord4j.common.util.Snowflake
-import org.neo4j.springframework.data.core.schema.Id
-import org.neo4j.springframework.data.core.schema.Node
 
-@Node
-data class GuildConfig(
-        @Id val guildId: Snowflake,
-        val prefix: String,
-        val enabled: Boolean = false
-)
+fun Long.toSnowflake() = Snowflake.of(this)

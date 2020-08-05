@@ -17,15 +17,11 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.guild
+package vettingbot.vetting
 
 import discord4j.common.util.Snowflake
-import org.neo4j.springframework.data.core.schema.Id
-import org.neo4j.springframework.data.core.schema.Node
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
 
-@Node
-data class GuildConfig(
-        @Id val guildId: Snowflake,
-        val prefix: String,
-        val enabled: Boolean = false
-)
+interface VettingChannelRepository: ReactiveCrudRepository<VettingChannel, Long> {
+    suspend fun findByGuildIdAndUserId(guildId: Snowflake, userId: Snowflake): VettingChannel?
+}

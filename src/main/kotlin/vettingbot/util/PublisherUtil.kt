@@ -19,10 +19,22 @@
 
 package vettingbot.util
 
+import discord4j.rest.http.client.ClientException
+import io.netty.handler.codec.http.HttpResponseStatus
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
 
 suspend fun <T> Publisher<T>.awaitCompletion() {
     Mono.`when`(this).awaitFirstOrNull()
+}
+
+fun <T> Mono<T>.onDiscordNotFound(f: (ClientException) -> Mono<T>): Mono<T> {
+    return onErrorResume { e ->
+        if (e is ClientException && e.status == HttpResponseStatus.NOT_FOUND) {
+            f(e)
+        } else {
+            Mono.error(e)
+        }
+    }
 }

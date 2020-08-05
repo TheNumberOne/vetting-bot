@@ -27,6 +27,7 @@ import discord4j.core.spec.EmbedCreateSpec
 import discord4j.core.spec.MessageCreateSpec
 import discord4j.discordjson.json.AllowedMentionsData
 import discord4j.discordjson.json.EmbedData
+import discord4j.discordjson.json.MessageCreateRequest
 import discord4j.rest.util.AllowedMentions
 import discord4j.rest.util.Color
 import discord4j.rest.util.MultipartRequest
@@ -60,15 +61,15 @@ suspend inline fun MessageChannel.sendEmbed(dsl: EmbedCreateSpecDsl.() -> Unit):
     return createEmbed(embedDsl(dsl)).awaitSingle()
 }
 
-private fun MessageCreateSpec.fromData(request: MultipartRequest) {
-    request.createRequest?.content()?.nullable?.let(this::setContent)
-    request.createRequest?.tts()?.nullable?.let(this::setTts)
-    request.createRequest?.embed()?.nullable?.let { embed -> setEmbed { it.fromData(embed) } }
+private fun MessageCreateSpec.fromData(request: MultipartRequest<MessageCreateRequest>) {
+    request.jsonPayload?.content()?.nullable?.let(this::setContent)
+    request.jsonPayload?.tts()?.nullable?.let(this::setTts)
+    request.jsonPayload?.embed()?.nullable?.let { embed -> setEmbed { it.fromData(embed) } }
     request.files.forEach { file -> addFile(file.t1, file.t2) }
-    request.createRequest?.allowedMentions()?.nullable?.let { data -> setAllowedMentions(fromData(data)) }
+    request.jsonPayload?.allowedMentions()?.nullable?.let { data -> setAllowedMentions(fromData(data)) }
 }
 
-class MessageCreateTemplate(private val data: MultipartRequest) : Consumer<MessageCreateSpec>, (MessageCreateSpec) -> Unit {
+class MessageCreateTemplate(private val data: MultipartRequest<MessageCreateRequest>) : Consumer<MessageCreateSpec>, (MessageCreateSpec) -> Unit {
 
     override fun accept(spec: MessageCreateSpec) = spec.fromData(data)
     inline fun andThen(spec: MessageCreateSpecDsl.() -> Unit): MessageCreateTemplate {

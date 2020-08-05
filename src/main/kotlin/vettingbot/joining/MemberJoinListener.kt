@@ -23,6 +23,7 @@ import discord4j.core.event.domain.guild.MemberJoinEvent
 import org.springframework.stereotype.Component
 import vettingbot.discord.DiscordEventListener
 import vettingbot.util.sendMessage
+import vettingbot.vetting.VettingChannelService
 
 @Component
 class MemberJoinListener(private val channelCreator: VettingChannelService) : DiscordEventListener<MemberJoinEvent> {

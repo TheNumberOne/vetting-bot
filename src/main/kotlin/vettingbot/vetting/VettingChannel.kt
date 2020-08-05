@@ -17,15 +17,20 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.guild
+package vettingbot.vetting
 
 import discord4j.common.util.Snowflake
 import org.neo4j.springframework.data.core.schema.Id
 import org.neo4j.springframework.data.core.schema.Node
 
 @Node
-data class GuildConfig(
-        @Id val guildId: Snowflake,
-        val prefix: String,
-        val enabled: Boolean = false
-)
+data class VettingChannel(
+    @Id val channelId: Long,
+    // unique index should be on here
+    val userId: Snowflake,
+    val guildId: Snowflake
+) {
+    constructor( channelId: Snowflake,
+                 userId: Snowflake,
+                 guildId: Snowflake): this(channelId.asLong(), userId, guildId)
+}

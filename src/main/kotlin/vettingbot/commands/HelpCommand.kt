@@ -22,7 +22,6 @@ package vettingbot.commands
 import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
@@ -35,15 +34,17 @@ import vettingbot.util.respondMessage
 
 @Component
 class HelpCommand(
-        private val guilds: GuildConfigService,
-        @Lazy private val commandsService: CommandsService
+    private val guilds: GuildConfigService,
+    @Lazy private val commandsService: CommandsService
 ) : AbstractCommand(listOf("help", "h"), "Provides help for commands.") {
 
     override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
-        description("""
+        description(
+            """
                 This command is used to display help for other commands.
                 Pass the name of another command to see help for that command.
-            """.trimIndent())
+            """.trimIndent()
+        )
         field("Usage", "${guilds.getPrefix(guildId)}help [command]")
     }
 
@@ -60,10 +61,11 @@ class HelpCommand(
                 description("Vetting Bot is a bot used for vetting new members to servers.")
 
                 commandsService.commands
-                        .filter { it.canExecute(guildId, member) }
-                        .forEach {
-                            field(it.names.first(), it.quickHelp)
-                        }
+                    .filter { it.canExecute(guildId, member) }
+                    .sortedBy { it.names.first() }
+                    .forEach {
+                        field(it.names.first(), it.quickHelp)
+                    }
             }
             return
         }
@@ -99,10 +101,10 @@ class HelpCommand(
             }
             command.displayHelp(guildId)(spec)
             command.subCommands
-                    .filter { it.canExecute(guildId, member) }
-                    .forEach {
-                        field(it.names.first(), it.quickHelp)
-                    }
+                .filter { it.canExecute(guildId, member) }
+                .forEach {
+                    field(it.names.first(), it.quickHelp)
+                }
         }
     }
 }

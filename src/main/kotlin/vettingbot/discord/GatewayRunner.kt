@@ -58,7 +58,7 @@ class GatewayRunner(
             subscribers.forEach {
                 it.subscribe(gateway)
             }
-        }.flatMap { it.onDisconnect() }.subscribeOn(scheduler).subscribe()
+        }.flatMap { it.onDisconnect() }.subscribeOn(scheduler).cache().subscribe()
 
         cancel.getAndSet(Disposables.composite(scheduler, cancelMono))?.dispose()
     }

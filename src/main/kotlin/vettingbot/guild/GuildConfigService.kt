@@ -30,7 +30,7 @@ import vettingbot.util.awaitCompletion
 class GuildConfigService(private val repo: GuildConfigRepository, private val botConfig: BotConfigService) {
     suspend fun getGuildConfig(id: Snowflake): GuildConfig {
         return repo.findById(id).awaitFirstOrNull()
-                ?: repo.save(GuildConfig(id, botConfig.getDefaultPrefix(), botConfig.getDefaultCategoryName())).awaitSingle()
+                ?: repo.save(GuildConfig(id, botConfig.getDefaultPrefix())).awaitSingle()
     }
 
     suspend fun getPrefix(guildId: Snowflake): String {
@@ -39,12 +39,5 @@ class GuildConfigService(private val repo: GuildConfigRepository, private val bo
 
     suspend fun setPrefix(guildId: Snowflake, prefix: String) {
         getGuildConfig(guildId).copy(prefix = prefix).also { repo.save(it).awaitCompletion() }
-    }
-
-    suspend fun getCategoryName(guildId: Snowflake) = getGuildConfig(guildId).categoryName
-
-    suspend fun getCategory(guildId: Snowflake) = getGuildConfig(guildId).category
-    suspend fun setCategory(guildId: Snowflake, categoryId: Snowflake) {
-        getGuildConfig(guildId).copy(category = categoryId)
     }
 }

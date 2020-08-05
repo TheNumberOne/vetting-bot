@@ -17,15 +17,23 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.guild
+package vettingbot.vetting
 
 import discord4j.common.util.Snowflake
-import org.neo4j.springframework.data.core.schema.Id
-import org.neo4j.springframework.data.core.schema.Node
+import org.neo4j.springframework.data.repository.query.Query
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
+import reactor.core.publisher.Flux
 
-@Node
-data class GuildConfig(
-        @Id val guildId: Snowflake,
-        val prefix: String,
-        val enabled: Boolean = false
-)
+interface CategoryDataRepository :
+    ReactiveCrudRepository<CategoryData, Long>
+{
+    @Query("MATCH (c:CategoryData { guildId: \$guildId })\n" +
+            "OPTIONAL MATCH (c)-[:PARENT_OF]->(v:VettingChannel)\n" +
+            "WITH c, count(v) as numChildren\n" +
+            "WHERE numChildren < \$limit\n" +
+            "RETURN c\n"
+    )
+    fun findNonFullCategoriesByGuildId(guildId: Snowflake, limit: Int): Flux<CategoryData>
+
+    fun findByGuildId(guildId: Snowflake): Flux<CategoryData>
+}

@@ -54,5 +54,7 @@ class CommandListener(
         } catch (e: Exception) {
             logger.error("Error while executing command: $content", e)
         }
+
+
     }
 }

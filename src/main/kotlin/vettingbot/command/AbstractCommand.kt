@@ -23,27 +23,36 @@ import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Member
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
+import discord4j.rest.util.Permission
+import discord4j.rest.util.PermissionSet
+import kotlinx.coroutines.reactive.awaitSingle
 
 @Suppress("SpringJavaConstructorAutowiringInspection")
 open class AbstractCommand(
-        final override val names: List<String>,
-        final override val quickHelp: String,
-        final override val subCommands: List<Command> = emptyList()
+    final override val names: List<String>,
+    final override val quickHelp: String,
+    private val permissionsRequired: PermissionSet = PermissionSet.none(),
+    final override val subCommands: List<Command> = emptyList()
 ) : Command {
     constructor(
-            name: String,
-            quickHelp: String,
-            subCommands: List<Command> = emptyList()
+        name: String,
+        quickHelp: String,
+        vararg permissionsRequired: Permission,
+        subCommands: List<Command> = emptyList()
     ) : this(
-            listOf(name),
-            quickHelp,
-            subCommands
-    ) {
-    }
+        listOf(name),
+        quickHelp,
+        PermissionSet.of(*permissionsRequired),
+        subCommands
+    )
 
     override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = { }
 
-    override suspend fun canExecute(guildId: Snowflake, member: Member): Boolean = true
+    override suspend fun canExecute(guildId: Snowflake, member: Member): Boolean {
+        return !member.isBot &&
+                (permissionsRequired.isEmpty() ||
+                        member.basePermissions.awaitSingle().containsAll(permissionsRequired))
+    }
 
     override suspend fun run(message: MessageCreateEvent, args: String) {}
 }

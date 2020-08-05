@@ -32,7 +32,8 @@ import vettingbot.util.respondEmbed
 import vettingbot.util.respondMessage
 
 @Component
-class PrefixCommand(private val guildService: GuildConfigService) : AbstractCommand("prefix", "Set the prefix of the bot") {
+class PrefixCommand(private val guildService: GuildConfigService) :
+    AbstractCommand("prefix", "Set the prefix of the bot", Permission.ADMINISTRATOR) {
     override suspend fun canExecute(guildId: Snowflake, member: Member): Boolean {
         return member.basePermissions.awaitSingle().contains(Permission.ADMINISTRATOR)
     }

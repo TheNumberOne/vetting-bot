@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2020  Rosetta Roberts <rosettafroberts@gmail.com>
  *
@@ -17,15 +18,9 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.guild
-
-import discord4j.common.util.Snowflake
-import org.neo4j.springframework.data.core.schema.Id
-import org.neo4j.springframework.data.core.schema.Node
-
-@Node
-data class GuildConfig(
-        @Id val guildId: Snowflake,
-        val prefix: String,
-        val enabled: Boolean = false
-)
+pluginManagement {
+    repositories {
+        maven { url = uri("https://repo.spring.io/milestone") }
+        gradlePluginPortal()
+    }
+}
