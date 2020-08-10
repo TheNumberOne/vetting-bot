@@ -17,18 +17,29 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.joining
+package vettingbot.vetting
 
-import discord4j.core.event.domain.guild.MemberJoinEvent
+import discord4j.core.event.domain.message.ReactionAddEvent
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
 import vettingbot.discord.DiscordEventListener
-import vettingbot.vetting.VettingService
+import vettingbot.util.awaitCompletion
+import vettingbot.util.nullable
 
 @Component
-class MemberJoinListener(
-    private val vettingService: VettingService
-) : DiscordEventListener<MemberJoinEvent> {
-    override suspend fun on(event: MemberJoinEvent) {
-        vettingService.beginVetting(event.member)
+class MessageReactionListener(private val messageService: MessageService, private val vettingService: VettingService) :
+    DiscordEventListener<ReactionAddEvent> {
+    override suspend fun on(event: ReactionAddEvent) {
+        val member = event.member.nullable ?: return
+
+        val messageId = event.messageId
+        val emoji = event.emoji
+        val vettingConfig = messageService.getVettingMessage(messageId) ?: return
+
+        event.message.awaitSingle()?.removeReaction(emoji, event.userId)?.awaitCompletion()
+
+        if (vettingConfig.isVettingEmoji(emoji)) {
+            vettingService.beginVetting(member)
+        }
     }
 }

@@ -31,6 +31,7 @@ data class BotConfig(
         val defaultPrefix: String,
         val defaultCategoryName: String,
         // Since there is only one bot, we only use one bot config.
+        val defaultVettingText: String,
         @Id val id: Int = INSTANCE_ID
 ) {
     companion object {

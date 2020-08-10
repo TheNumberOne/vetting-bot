@@ -45,8 +45,18 @@ class CommandListener(
         val commandText = content.substring(prefix.length).trim()
         val parts = commandText.split(' ', limit = 2)
         val commandName = if (parts.isNotEmpty()) parts[0] else ""
-        val commandArguments = if (parts.size >= 2) parts[1] else ""
-        val command = commands.findCommand(commandName) ?: return
+
+        var commandArguments = if (parts.size >= 2) parts[1] else ""
+        var command = commands.findCommand(commandName) ?: return
+
+        while (command.subCommands.isNotEmpty()) {
+            val subCommandParts = commandArguments.split(' ', limit = 2)
+            val subCommandName = if (subCommandParts.isNotEmpty()) subCommandParts[0] else ""
+            val subCommandArguments = if (subCommandParts.size >= 2) subCommandParts[1] else ""
+            command = command.subCommands.find { it.names.contains(subCommandName) } ?: break
+            commandArguments = subCommandArguments
+        }
+
         if (!command.canExecute(server, member)) return
         try {
             logger.debug { "Executing command: $content" }

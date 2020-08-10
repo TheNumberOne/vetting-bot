@@ -17,18 +17,12 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.joining
+package vettingbot.vetting
 
-import discord4j.core.event.domain.guild.MemberJoinEvent
-import org.springframework.stereotype.Component
-import vettingbot.discord.DiscordEventListener
-import vettingbot.vetting.VettingService
+import discord4j.common.util.Snowflake
+import kotlinx.coroutines.flow.Flow
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
 
-@Component
-class MemberJoinListener(
-    private val vettingService: VettingService
-) : DiscordEventListener<MemberJoinEvent> {
-    override suspend fun on(event: MemberJoinEvent) {
-        vettingService.beginVetting(event.member)
-    }
+interface MessageConfigRepository: ReactiveCrudRepository<MessageConfig, Long> {
+    fun findAllByGuildId(guildId: Snowflake): Flow<MessageConfig>
 }

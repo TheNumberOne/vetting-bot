@@ -58,7 +58,12 @@ class HelpCommand(
         if (commandNames.isEmpty()) {
             message.respondEmbed {
                 title("Help")
-                description("Vetting Bot is a bot used for vetting new members to servers.")
+                description(
+                    """
+                    |Vetting Bot is a bot used for vetting new members to servers.
+                    |${if (guilds.isEnabled(guildId)) "Vetting is currently enabled for this server." else "**Vetting is currently not enabled for this server.**"}
+                    """.trimMargin()
+                )
 
                 commandsService.commands
                     .filter { it.canExecute(guildId, member) }

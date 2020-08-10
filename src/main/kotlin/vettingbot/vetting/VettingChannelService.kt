@@ -62,6 +62,8 @@ class VettingChannelService(
         return wrapExceptions { createAndSaveVettingChannel(member) }
     }
 
+    suspend fun getVettingChannelFor(member: Member): GuildMessageChannel? = getVettingChannelFor(member.client, member.guildId, member.id)
+
     suspend fun getVettingChannelFor(
         client: GatewayDiscordClient,
         guildId: Snowflake,
@@ -105,7 +107,7 @@ class VettingChannelService(
         }!!
     }
 
-    private suspend fun createAndSaveVettingChannel(member: Member): GuildMessageChannel {
+    suspend fun createAndSaveVettingChannel(member: Member): GuildMessageChannel {
         val guild = wrapExceptions { member.guild.awaitSingle() }
         val category = wrapExceptions { getOrCreateNonFullVettingCategoryData(guild) }
 

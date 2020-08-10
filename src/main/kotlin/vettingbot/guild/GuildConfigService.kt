@@ -30,7 +30,7 @@ import vettingbot.util.awaitCompletion
 class GuildConfigService(private val repo: GuildConfigRepository, private val botConfig: BotConfigService) {
     suspend fun getGuildConfig(id: Snowflake): GuildConfig {
         return repo.findById(id).awaitFirstOrNull()
-                ?: repo.save(GuildConfig(id, botConfig.getDefaultPrefix())).awaitSingle()
+            ?: repo.save(GuildConfig(id, botConfig.getDefaultPrefix(), botConfig.getDefaultVettingText())).awaitSingle()
     }
 
     suspend fun getPrefix(guildId: Snowflake): String {
@@ -39,5 +39,23 @@ class GuildConfigService(private val repo: GuildConfigRepository, private val bo
 
     suspend fun setPrefix(guildId: Snowflake, prefix: String) {
         getGuildConfig(guildId).copy(prefix = prefix).also { repo.save(it).awaitCompletion() }
+    }
+
+    suspend fun getVettingText(guildId: Snowflake): String {
+        return getGuildConfig(guildId).vettingText
+    }
+
+    suspend fun setVettingText(guildId: Snowflake, text: String) {
+        getGuildConfig(guildId).copy(vettingText = text)
+            .also { repo.save(it).awaitCompletion() }
+    }
+
+    suspend fun isEnabled(guildId: Snowflake): Boolean {
+        return getGuildConfig(guildId).enabled
+    }
+
+    suspend fun setEnabled(guildId: Snowflake, enabled: Boolean) {
+        getGuildConfig(guildId).copy(enabled = enabled)
+            .also { repo.save(it).awaitCompletion() }
     }
 }

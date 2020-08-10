@@ -37,4 +37,8 @@ class BotConfigService(private val defaultBotConfig: BotConfig, private val repo
     suspend fun getDefaultCategoryName(): String {
         return getConfig().defaultCategoryName
     }
+
+    suspend fun getDefaultVettingText(): String {
+        return getConfig().defaultVettingText
+    }
 }

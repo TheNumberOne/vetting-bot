@@ -17,16 +17,24 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.guild
+package vettingbot.vetting
 
 import discord4j.common.util.Snowflake
+import discord4j.core.`object`.reaction.ReactionEmoji
 import org.neo4j.springframework.data.core.schema.Id
 import org.neo4j.springframework.data.core.schema.Node
+import vettingbot.util.nullable
 
 @Node
-data class GuildConfig(
-    @Id val guildId: Snowflake,
-    val prefix: String,
-    val vettingText: String,
-    val enabled: Boolean = false
-)
+class MessageConfig(@Id val id: Long, val guildId: Snowflake, val channelId: Snowflake, val emojiId: Snowflake?, val emojiName: String?) {
+    fun isVettingEmoji(emoji: ReactionEmoji): Boolean {
+        return isVettingEmoji(emoji.asCustomEmoji().nullable?.id, emoji.asUnicodeEmoji().nullable?.raw)
+    }
+
+    fun isVettingEmoji(emojiId: Snowflake?, emojiName: String?): Boolean {
+        if (this.emojiId != null || emojiId != null) {
+            return this.emojiId == emojiId
+        }
+        return this.emojiName == emojiName
+    }
+}
