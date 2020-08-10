@@ -28,5 +28,8 @@ data class GuildConfig(
     @Id val guildId: Snowflake,
     val prefix: String,
     val vettingText: String,
-    val enabled: Boolean = false
+    val enabled: Boolean = false,
+    val vettingRole: Snowflake? = null,
+    val vettedRole: Snowflake? = null,
+    val moderatorRoles: List<Snowflake> = emptyList()
 )

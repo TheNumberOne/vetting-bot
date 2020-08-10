@@ -22,6 +22,7 @@ package vettingbot.vetting
 import discord4j.core.`object`.entity.Member
 import org.springframework.stereotype.Component
 import vettingbot.guild.GuildConfigService
+import vettingbot.util.awaitCompletion
 import vettingbot.util.sendMessage
 
 @Component
@@ -32,11 +33,18 @@ class VettingService(
     suspend fun needsVetting(member: Member): Boolean {
         if (member.isBot) return false
         if (!guildConfigService.isEnabled(member.guildId)) return false
+        if (member.roleIds.contains(guildConfigService.getVettedRole(member.guildId))) return false
         return true
     }
 
     suspend fun beginVetting(member: Member) {
         if (!needsVetting(member)) return
+
+        val vettingRole = guildConfigService.getVettingRole(member.guildId)
+
+        if (vettingRole != null && !member.roleIds.contains(vettingRole)) {
+            member.addRole(vettingRole, "Began the vetting process.").awaitCompletion()
+        }
 
         val existingChannel = channelCreator.getVettingChannelFor(member)
         if (existingChannel != null) {

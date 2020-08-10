@@ -21,4 +21,13 @@ package vettingbot.util
 
 import discord4j.common.util.Snowflake
 
-fun Long.toSnowflake() = Snowflake.of(this)
+fun Long.toSnowflake(): Snowflake = Snowflake.of(this)
+
+private val SNOWFLAKE_REGEX = Regex("\\d+")
+
+fun findAndParseSnowflake(text: String): Snowflake? {
+    val role = SNOWFLAKE_REGEX.find(text) ?: return null
+    return Snowflake.of(role.value)
+}
+
+fun Snowflake.roleMention() = "<@&${asString()}>"

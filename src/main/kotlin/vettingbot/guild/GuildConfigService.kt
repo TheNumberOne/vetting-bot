@@ -55,7 +55,33 @@ class GuildConfigService(private val repo: GuildConfigRepository, private val bo
     }
 
     suspend fun setEnabled(guildId: Snowflake, enabled: Boolean) {
-        getGuildConfig(guildId).copy(enabled = enabled)
-            .also { repo.save(it).awaitCompletion() }
+        val config = getGuildConfig(guildId)
+        if (config.enabled == enabled) return
+        val newConfig = config.copy(enabled = enabled)
+        if (!enabled || canEnable(config)) {
+            repo.save(newConfig).awaitCompletion()
+        } else {
+            throw IllegalStateException("Can't enable the guild.")
+        }
+    }
+
+    private fun canEnable(config: GuildConfig): Boolean {
+        return config.vettedRole != null && config.vettingRole != null
+    }
+
+    suspend fun getVettingRole(guildId: Snowflake): Snowflake? {
+        return getGuildConfig(guildId).vettingRole
+    }
+
+    suspend fun setVettingRole(guildId: Snowflake, roleId: Snowflake) {
+        return getGuildConfig(guildId).copy(vettingRole = roleId).let { repo.save(it).awaitCompletion() }
+    }
+
+    suspend fun getVettedRole(guildId: Snowflake): Snowflake? {
+        return getGuildConfig(guildId).vettedRole
+    }
+
+    suspend fun setVettedRole(guildId: Snowflake, roleId: Snowflake) {
+        return getGuildConfig(guildId).copy(vettedRole = roleId).let { repo.save(it).awaitCompletion() }
     }
 }

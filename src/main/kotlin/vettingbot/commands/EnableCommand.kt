@@ -33,6 +33,21 @@ class EnableCommand(private val guildConfigService: GuildConfigService) :
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val guildId = message.guildId.nullable ?: return
         val previouslyEnabled = guildConfigService.isEnabled(guildId)
+        val guildConfig = guildConfigService.getGuildConfig(guildId)
+        if (!guildConfig.enabled && guildConfig.vettingRole == null) {
+            message.respondEmbed {
+                title("Enable/Disable")
+                description("Please set a role that is assigned to members while they are being vetted.")
+            }
+            return
+        }
+        if (!guildConfig.enabled && guildConfig.vettedRole == null) {
+            message.respondEmbed {
+                title("Enable/Disable")
+                description("Please set a role that is assigned to members after they are vetted.")
+            }
+            return
+        }
         guildConfigService.setEnabled(guildId, true)
         message.respondEmbed {
             title("Enable/Disable")

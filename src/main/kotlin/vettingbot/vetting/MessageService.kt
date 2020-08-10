@@ -21,8 +21,10 @@ package vettingbot.vetting
 
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Guild
+import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.reaction.ReactionEmoji
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -32,6 +34,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
+import reactor.core.publisher.Flux
 import reactor.kotlin.core.publisher.cast
 import reactor.kotlin.core.publisher.whenComplete
 import vettingbot.util.awaitCompletion
@@ -73,6 +76,16 @@ class MessageService(
         }
     }
 
+    suspend fun getVettingMessagesInGuild(guild: Guild): List<Message> {
+        val messages = transaction.executeAndAwait { messageConfigRepository.findAllByGuildId(guild.id).toList() }!!
+            .map { message ->
+                guild.client.getMessageById(message.channelId, message.id.toSnowflake()).onDiscordNotFound {
+                    transaction.transactional(messageConfigRepository.delete(message)).cast()
+                }
+            }
+        return Flux.merge(messages).asFlow().toList()
+    }
+
     suspend fun scanVettingMessage(guild: Guild, message: MessageConfig) {
         val discordMessage =
             guild.client.getMessageById(message.channelId, message.id.toSnowflake()).onDiscordNotFound {
@@ -99,5 +112,9 @@ class MessageService(
                 }
             }
         }
+    }
+
+    fun getVettingMessagesInGuild(guildId: Snowflake): Flow<MessageConfig> {
+        return messageConfigRepository.findAllByGuildId(guildId)
     }
 }

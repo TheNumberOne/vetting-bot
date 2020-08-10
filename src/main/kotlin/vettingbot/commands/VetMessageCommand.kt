@@ -25,6 +25,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.rest.http.client.ClientException
 import discord4j.rest.util.Permission
 import io.netty.handler.codec.http.HttpResponseStatus
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
 import vettingbot.util.awaitCompletion
@@ -52,8 +53,28 @@ class VetMessageCommand(
     "Create a message that users can start the vetting process by reacting to.",
     Permission.ADMINISTRATOR
 ) {
+    @ExperimentalUnsignedTypes
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val guildId = message.guildId.nullable ?: return
+        if (args.isEmpty()) {
+            val messages = messageService.getVettingMessagesInGuild(message.guild.awaitSingle())
+            val links = messages.map {
+                "https://discordapp.com/channels/${guildId.asString()}/${it.channelId.asString()}/${it.id.asString()}"
+            }.toList().joinToString("\n")
+            if (links.isNotEmpty()) {
+                message.respondEmbed {
+                    title("Vet Messages")
+                    description("These messages are currently used to start the vetting process.")
+                    field("Messages", links)
+                }
+            } else {
+                message.respondEmbed {
+                    title("Vet Messages")
+                    description("There are not currently any messages being used to start the vetting process.")
+                }
+            }
+            return
+        }
         val parts = args.split(" ", limit = 2)
         if (parts.size < 2) {
             message.respondEmbed {
