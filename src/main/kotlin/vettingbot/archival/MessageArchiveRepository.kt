@@ -17,17 +17,8 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.neo4j
+package vettingbot.archival
 
-import org.neo4j.springframework.data.core.convert.Neo4jConversions
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
 
-
-@Configuration
-class Neo4JConfiguration {
-    @Bean
-    fun neo4jConversions(): Neo4jConversions? {
-        return Neo4jConversions(setOf(SnowflakeConverter(), InstantConverter()))
-    }
-}
+interface MessageArchiveRepository : ReactiveCrudRepository<MessageArchive, Long>

@@ -20,18 +20,23 @@
 package vettingbot.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.rest.http.client.ClientException
+import discord4j.rest.util.Color
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
+import vettingbot.commands.custom.CustomVettingCommandsService
 import vettingbot.discord.DiscordEventListener
 import vettingbot.guild.GuildConfigService
 import vettingbot.util.nullable
+import vettingbot.util.respondEmbed
 
 private val logger = KotlinLogging.logger {}
 
 @Component
 class CommandListener(
-        private val commands: CommandsService,
-        private val guildService: GuildConfigService
+    private val commands: CommandsService,
+    private val customCommands: CustomVettingCommandsService,
+    private val guildService: GuildConfigService
 ) : DiscordEventListener<MessageCreateEvent> {
 
     override suspend fun on(event: MessageCreateEvent) {
@@ -47,9 +52,11 @@ class CommandListener(
         val commandName = if (parts.isNotEmpty()) parts[0] else ""
 
         var commandArguments = if (parts.size >= 2) parts[1] else ""
-        var command = commands.findCommand(commandName) ?: return
+        var command = commands.findCommand(commandName) ?: customCommands.findCommand(server, commandName) ?: return
 
         while (command.subCommands.isNotEmpty()) {
+            if (!command.canExecute(server, member)) return
+
             val subCommandParts = commandArguments.split(' ', limit = 2)
             val subCommandName = if (subCommandParts.isNotEmpty()) subCommandParts[0] else ""
             val subCommandArguments = if (subCommandParts.size >= 2) subCommandParts[1] else ""
@@ -61,6 +68,16 @@ class CommandListener(
         try {
             logger.debug { "Executing command: $content" }
             command.run(event, commandArguments)
+        } catch (e: ClientException) {
+            logger.error("Error while executing command: $content", e)
+            val message = e.errorResponse.nullable?.fields?.get("message") as? String
+                ?: e.errorResponse.nullable?.fields?.get("after") as? String
+                ?: "Unknown discord error."
+            event.respondEmbed {
+                title("Discord Error")
+                description(message)
+                color(Color.RED)
+            }
         } catch (e: Exception) {
             logger.error("Error while executing command: $content", e)
         }

@@ -17,19 +17,26 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.util
+package vettingbot.commands.custom
 
 import discord4j.common.util.Snowflake
+import org.neo4j.springframework.data.core.schema.GeneratedValue
+import org.neo4j.springframework.data.core.schema.Id
+import org.neo4j.springframework.data.core.schema.Node
 
-fun Long.toSnowflake(): Snowflake = Snowflake.of(this)
-
-private val SNOWFLAKE_REGEX = Regex("\\d+")
-
-fun findAndParseSnowflake(text: String): Snowflake? {
-    val role = SNOWFLAKE_REGEX.find(text) ?: return null
-    return Snowflake.of(role.value)
-}
-
-fun Snowflake.roleMention() = "<@&${asString()}>"
-
-fun Snowflake.memberMention() = "<@!${asString()}>"
+@Node
+data class CustomVettingCommandConfig(
+    val guildId: Snowflake,
+    val name: String,
+    val kick: Boolean = false,
+    val kickReason: String? = "",
+    val ban: Boolean = false,
+    val banReason: String? = "",
+    val addRoles: List<Snowflake> = emptyList(),
+    val removeRoles: List<Snowflake> = emptyList(),
+    val allowedRoles: List<Snowflake> = emptyList(),
+    val allowedUsers: List<Snowflake> = emptyList(),
+    val forbiddenRoles: List<Snowflake> = emptyList(),
+    val forbiddenUsers: List<Snowflake> = emptyList(),
+    @Id @GeneratedValue val id: Long? = null
+)

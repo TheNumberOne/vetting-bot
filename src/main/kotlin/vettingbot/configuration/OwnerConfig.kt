@@ -17,17 +17,11 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.neo4j
+package vettingbot.configuration
 
-import org.neo4j.springframework.data.core.convert.Neo4jConversions
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.ConstructorBinding
 
-
-@Configuration
-class Neo4JConfiguration {
-    @Bean
-    fun neo4jConversions(): Neo4jConversions? {
-        return Neo4jConversions(setOf(SnowflakeConverter(), InstantConverter()))
-    }
-}
+@ConstructorBinding
+@ConfigurationProperties(prefix = "owner")
+class OwnerConfig(val id: Long)

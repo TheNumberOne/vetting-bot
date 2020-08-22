@@ -21,6 +21,7 @@ package vettingbot.vetting
 
 import discord4j.core.`object`.entity.Member
 import org.springframework.stereotype.Component
+import vettingbot.archival.ArchiveChannelService
 import vettingbot.guild.GuildConfigService
 import vettingbot.util.awaitCompletion
 import vettingbot.util.sendMessage
@@ -28,7 +29,8 @@ import vettingbot.util.sendMessage
 @Component
 class VettingService(
     private val guildConfigService: GuildConfigService,
-    private val channelCreator: VettingChannelService
+    private val channelCreator: VettingChannelService,
+    private val archiveChannelService: ArchiveChannelService
 ) {
     suspend fun needsVetting(member: Member): Boolean {
         if (member.isBot) return false
@@ -59,6 +61,8 @@ class VettingService(
 
         val channel = channelCreator.createAndSaveVettingChannel(member)
 
+        archiveChannelService.restoreArchiveFor(member.id, channel)
+
         val template = guildConfigService.getVettingText(member.guildId)
         val text = template.replace("{member}", member.mention)
 
@@ -68,5 +72,7 @@ class VettingService(
                 description(text)
             }
         }
+
+        archiveChannelService.startArchiving(member.id, channel)
     }
 }

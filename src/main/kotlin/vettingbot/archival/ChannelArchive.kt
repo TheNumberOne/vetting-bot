@@ -17,17 +17,21 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.neo4j
+package vettingbot.archival
 
-import org.neo4j.springframework.data.core.convert.Neo4jConversions
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import discord4j.common.util.Snowflake
+import org.neo4j.springframework.data.core.schema.GeneratedValue
+import org.neo4j.springframework.data.core.schema.Id
+import org.neo4j.springframework.data.core.schema.Node
+import org.neo4j.springframework.data.core.schema.Relationship
+import java.time.Instant
 
-
-@Configuration
-class Neo4JConfiguration {
-    @Bean
-    fun neo4jConversions(): Neo4jConversions? {
-        return Neo4jConversions(setOf(SnowflakeConverter(), InstantConverter()))
-    }
-}
+@Node
+data class ChannelArchive(
+    val guildId: Snowflake,
+    val userId: Snowflake,
+    val lastMessageArchived: Instant,
+    val recordMessagesAfter: Instant,
+    @Relationship("HAS_MESSAGE_ARCHIVE") val messages: Set<MessageArchive> = emptySet(),
+    @Id @GeneratedValue val id: Long? = null
+)

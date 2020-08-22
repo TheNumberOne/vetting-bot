@@ -17,17 +17,9 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.neo4j
+package vettingbot.util
 
-import org.neo4j.springframework.data.core.convert.Neo4jConversions
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import discord4j.common.util.Snowflake
+import java.time.Instant
 
-
-@Configuration
-class Neo4JConfiguration {
-    @Bean
-    fun neo4jConversions(): Neo4jConversions? {
-        return Neo4jConversions(setOf(SnowflakeConverter(), InstantConverter()))
-    }
-}
+val DISCORD_EPOCH_INSTANT: Instant get() = Instant.ofEpochMilli(Snowflake.DISCORD_EPOCH)

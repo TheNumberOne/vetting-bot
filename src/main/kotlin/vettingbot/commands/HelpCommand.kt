@@ -50,10 +50,12 @@ class HelpCommand(
 
 
     override suspend fun run(message: MessageCreateEvent, args: String) {
-        val commandNames = args.split(" ").filter { it.isNotBlank() }
-
         val guildId = message.guildId.nullable ?: return
         val member = message.member.nullable ?: return
+        val prefix = guilds.getPrefix(guildId)
+
+        val commandNames = args.removePrefix(prefix).split(" ").filter { it.isNotBlank() }
+
 
         if (commandNames.isEmpty()) {
             message.respondEmbed {
@@ -69,18 +71,19 @@ class HelpCommand(
                     .filter { it.canExecute(guildId, member) }
                     .sortedBy { it.names.first() }
                     .forEach {
-                        field(it.names.first(), it.quickHelp)
+                        field("`$prefix${it.names.first()}`", it.quickHelp)
                     }
             }
             return
         }
 
         var command = commandsService.findCommand(commandNames.first())
+
         if (command?.canExecute(guildId, member) != true) {
             message.respondMessage {
                 embed {
                     title("Help")
-                    description("Command ${commandNames.first()} does not exist.")
+                    description("Command $prefix${commandNames.first()} does not exist or you do not have permissions to execute it.")
                 }
             }
             return
@@ -90,7 +93,7 @@ class HelpCommand(
             if (next?.canExecute(guildId, member) != true) {
                 message.respondEmbed {
                     title("Help")
-                    description("Subcommand $name does not exist within command $previousName")
+                    description("Subcommand $name does not exist within command $prefix$previousName or you do not have permission to execute it.")
                 }
                 return
             }
@@ -99,16 +102,18 @@ class HelpCommand(
         command!!
 
         message.respondEmbed {
-            title(command.names.first())
+            title("`$prefix${commandNames.joinToString(" ")}`")
             description(command.quickHelp)
             if (command.names.size > 1) {
-                field("Aliases", command.names.joinToString(", "))
+                field(
+                    "Aliases",
+                    command.names.joinToString(", ") { "`$prefix${(commandNames.dropLast(1) + it).joinToString(" ")}`" })
             }
             command.displayHelp(guildId)(spec)
             command.subCommands
                 .filter { it.canExecute(guildId, member) }
                 .forEach {
-                    field(it.names.first(), it.quickHelp)
+                    field("`$prefix${(commandNames + it.names.first()).joinToString(" ")}`", it.quickHelp)
                 }
         }
     }

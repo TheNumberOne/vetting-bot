@@ -17,18 +17,27 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot
+package vettingbot.commands
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.boot.runApplication
-import vettingbot.configuration.BotConfig
+import discord4j.common.util.Snowflake
+import discord4j.core.`object`.entity.Member
+import discord4j.core.event.domain.message.MessageCreateEvent
+import org.springframework.context.annotation.Lazy
+import org.springframework.stereotype.Component
+import vettingbot.command.AbstractCommand
 import vettingbot.configuration.OwnerConfig
+import vettingbot.discord.GatewayRunner
+import kotlin.system.exitProcess
 
-@EnableConfigurationProperties(BotConfig::class, OwnerConfig::class)
-@SpringBootApplication
-class VettingBot
+@Component
+class KillCommand(private val ownerConfig: OwnerConfig, @Lazy private val gatewayRunner: GatewayRunner) :
+    AbstractCommand("kill", "Kills the bot.") {
+    override suspend fun canExecute(guildId: Snowflake, member: Member): Boolean {
+        return member.id.asLong() == ownerConfig.id
+    }
 
-fun main(args: Array<String>) {
-    runApplication<VettingBot>(*args)
+    override suspend fun run(message: MessageCreateEvent, args: String) {
+        gatewayRunner.stop()
+        exitProcess(0)
+    }
 }

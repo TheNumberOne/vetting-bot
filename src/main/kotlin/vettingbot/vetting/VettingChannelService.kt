@@ -26,6 +26,7 @@ import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.channel.Category
 import discord4j.core.`object`.entity.channel.GuildMessageChannel
+import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.rest.util.Permission
 import discord4j.rest.util.PermissionSet
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import reactor.kotlin.core.publisher.cast
+import vettingbot.archival.ArchiveChannelService
 import vettingbot.util.awaitCompletion
 import vettingbot.util.onDiscordNotFound
 import vettingbot.util.toSnowflake
@@ -54,7 +56,8 @@ private const val MAX_CHANNELS_PER_CATEGORY = 40
 class VettingChannelService(
     private val vettingChannelRepository: VettingChannelRepository,
     private val categoryDataRepository: CategoryDataRepository,
-    private val transactionalOperator: TransactionalOperator
+    private val transactionalOperator: TransactionalOperator,
+    private val archiveChannelService: ArchiveChannelService
 ) {
     suspend fun getOrCreateChannelFor(member: Member): GuildMessageChannel {
         val channel = wrapExceptions { getVettingChannelFor(member.client, member.guildId, member.id) }
@@ -107,7 +110,11 @@ class VettingChannelService(
         }!!
     }
 
-    suspend fun createAndSaveVettingChannel(member: Member): GuildMessageChannel {
+    suspend fun getUserForVettingChannel(channelId: Snowflake): Snowflake? {
+        return vettingChannelRepository.findById(channelId.asLong()).awaitFirstOrNull()?.userId
+    }
+
+    suspend fun createAndSaveVettingChannel(member: Member): TextChannel {
         val guild = wrapExceptions { member.guild.awaitSingle() }
         val category = wrapExceptions { getOrCreateNonFullVettingCategoryData(guild) }
 
@@ -144,7 +151,9 @@ class VettingChannelService(
             // Other code created a channel first.
             if (result.channelId != channel.id.asLong()) {
                 wrapExceptions { channel.delete("Accidentally created additional channel").awaitCompletion() }
-                return wrapExceptions { guild.getChannelById(result.channelId.toSnowflake()) } as GuildMessageChannel
+                return wrapExceptions {
+                    guild.getChannelById(result.channelId.toSnowflake()).awaitSingle()
+                } as TextChannel
             }
 
             return channel
@@ -160,6 +169,13 @@ class VettingChannelService(
                 vettingChannelRepository.deleteById(channelId.asLong()).awaitCompletion()
             }
         }
+    }
+
+    suspend fun deleteVettingChannel(channel: GuildMessageChannel) {
+        val userId = getUserForVettingChannel(channel.id) ?: error("Not a vetting channel.")
+        archiveChannelService.archive(userId, channel)
+        channel.delete().awaitCompletion()
+        deleteVettingChannel(channel.id)
     }
 
     private suspend fun getOrCreateNonFullVettingCategoryData(guild: Guild): CategoryData {

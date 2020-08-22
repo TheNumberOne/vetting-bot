@@ -20,6 +20,8 @@
 package vettingbot.vetting
 
 import discord4j.core.event.domain.message.ReactionAddEvent
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
 import vettingbot.discord.DiscordEventListener
@@ -29,14 +31,16 @@ import vettingbot.util.nullable
 @Component
 class MessageReactionListener(private val messageService: MessageService, private val vettingService: VettingService) :
     DiscordEventListener<ReactionAddEvent> {
-    override suspend fun on(event: ReactionAddEvent) {
-        val member = event.member.nullable ?: return
+    override suspend fun on(event: ReactionAddEvent) = coroutineScope {
+        val member = event.member.nullable ?: return@coroutineScope
 
         val messageId = event.messageId
         val emoji = event.emoji
-        val vettingConfig = messageService.getVettingMessage(messageId) ?: return
+        val vettingConfig = messageService.getVettingMessage(messageId) ?: return@coroutineScope
 
-        event.message.awaitSingle()?.removeReaction(emoji, event.userId)?.awaitCompletion()
+        launch {
+            event.message.awaitSingle()?.removeReaction(emoji, event.userId)?.awaitCompletion()
+        }
 
         if (vettingConfig.isVettingEmoji(emoji)) {
             vettingService.beginVetting(member)

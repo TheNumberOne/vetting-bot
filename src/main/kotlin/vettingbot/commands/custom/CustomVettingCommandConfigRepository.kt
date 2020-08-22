@@ -17,17 +17,17 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.neo4j
+package vettingbot.commands.custom
 
-import org.neo4j.springframework.data.core.convert.Neo4jConversions
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import discord4j.common.util.Snowflake
+import kotlinx.coroutines.flow.Flow
+import org.neo4j.springframework.data.repository.query.Query
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
 
+interface CustomVettingCommandConfigRepository : ReactiveCrudRepository<CustomVettingCommandConfig, Long> {
+    suspend fun findByGuildIdAndName(guildId: Snowflake, name: String): CustomVettingCommandConfig?
+    fun findByGuildId(guildId: Snowflake): Flow<CustomVettingCommandConfig>
 
-@Configuration
-class Neo4JConfiguration {
-    @Bean
-    fun neo4jConversions(): Neo4jConversions? {
-        return Neo4jConversions(setOf(SnowflakeConverter(), InstantConverter()))
-    }
+    @Query("MATCH (n: CustomVettingCommandConfig { guildId: \$guildId, name: \$name }) DELETE n")
+    suspend fun deleteByGuildIdAndName(guildId: Snowflake, name: String)
 }

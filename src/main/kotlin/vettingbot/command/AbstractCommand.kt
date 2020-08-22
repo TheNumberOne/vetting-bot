@@ -26,25 +26,31 @@ import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Permission
 import discord4j.rest.util.PermissionSet
 import kotlinx.coroutines.reactive.awaitSingle
+import vettingbot.util.respondEmbed
 
 @Suppress("SpringJavaConstructorAutowiringInspection")
 open class AbstractCommand(
     final override val names: List<String>,
     final override val quickHelp: String,
-    private val permissionsRequired: PermissionSet = PermissionSet.none(),
-    final override val subCommands: List<Command> = emptyList()
+    private val permissionsRequired: PermissionSet = PermissionSet.none()
 ) : Command {
     constructor(
         name: String,
         quickHelp: String,
-        vararg permissionsRequired: Permission,
-        subCommands: List<Command> = emptyList()
+        vararg permissionsRequired: Permission
     ) : this(
         listOf(name),
         quickHelp,
-        PermissionSet.of(*permissionsRequired),
-        subCommands
+        PermissionSet.of(*permissionsRequired)
     )
+
+    constructor(
+        names: List<String>,
+        quickHelp: String,
+        vararg permissionsRequired: Permission
+    ) : this(names, quickHelp, PermissionSet.of(*permissionsRequired))
+
+    override val subCommands: List<Command> = emptyList()
 
     override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = { }
 
@@ -54,5 +60,9 @@ open class AbstractCommand(
                         member.basePermissions.awaitSingle().containsAll(permissionsRequired))
     }
 
-    override suspend fun run(message: MessageCreateEvent, args: String) {}
+    override suspend fun run(message: MessageCreateEvent, args: String) {
+        message.respondEmbed {
+            description("This command is not yet implemented.")
+        }
+    }
 }

@@ -92,7 +92,7 @@ class VetMessageCommand(
         }
         val messageContent = parts[1]
         val createdMessage = message.respondEmbed {
-            description(messageContent)
+            description("$messageContent\n\nThis bot may record messages during the vetting process for moderation purposes.")
         }
         try {
             createdMessage.addReaction(emoji).awaitCompletion()
