@@ -65,7 +65,8 @@ class VettingChannelService(
         return wrapExceptions { createAndSaveVettingChannel(member) }
     }
 
-    suspend fun getVettingChannelFor(member: Member): GuildMessageChannel? = getVettingChannelFor(member.client, member.guildId, member.id)
+    suspend fun getVettingChannelFor(member: Member): GuildMessageChannel? =
+        getVettingChannelFor(member.client, member.guildId, member.id)
 
     suspend fun getVettingChannelFor(
         client: GatewayDiscordClient,
@@ -116,14 +117,14 @@ class VettingChannelService(
 
     suspend fun createAndSaveVettingChannel(member: Member): TextChannel {
         val guild = wrapExceptions { member.guild.awaitSingle() }
-        val category = wrapExceptions { getOrCreateNonFullVettingCategoryData(guild) }
+        val category = wrapExceptions { getOrCreateNonFullVettingCategory(guild) }
 
         val channelName = "vetting-${member.displayName}-${member.id.asString()}"
         val channel = wrapExceptions {
             guild.createTextChannel {
                 it.apply {
                     setName(channelName)
-                    setParentId(category.id.toSnowflake())
+                    setParentId(category.id)
                     setTopic("Vetting member ${member.displayName}")
 
                     setPermissionOverwrites(
@@ -139,7 +140,7 @@ class VettingChannelService(
                                 ),
                                 PermissionSet.none()
                             )
-                        )
+                        ) + category.permissionOverwrites
                     )
                 }
             }.awaitSingle()
@@ -178,8 +179,9 @@ class VettingChannelService(
         deleteVettingChannel(channel.id)
     }
 
-    private suspend fun getOrCreateNonFullVettingCategoryData(guild: Guild): CategoryData {
-        return getNonFullVettingCategoryData(guild) ?: CategoryData(createVettingCategory(guild))
+    private suspend fun getOrCreateNonFullVettingCategory(guild: Guild): Category {
+        return getNonFullVettingCategoryData(guild)?.id?.toSnowflake()
+            ?.let { guild.getChannelById(it).awaitSingle() as Category } ?: createVettingCategory(guild)
     }
 
     private suspend fun getNonFullVettingCategoryData(guild: Guild): CategoryData? {

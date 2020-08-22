@@ -96,10 +96,9 @@ class ArchiveChannelService(
     private suspend fun retrieveArchiveFor(guildId: Snowflake, userId: Snowflake): ChannelArchive? {
         return trans.executeAndAwait {
             channelArchiveRepository.findByGuildIdAndUserId(guildId, userId)
-        }!!
+        }
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     suspend fun restoreArchiveFor(userId: Snowflake, channel: TextChannel) = coroutineScope {
         val archive = retrieveArchiveFor(channel.guildId, userId) ?: return@coroutineScope
         val self = async {

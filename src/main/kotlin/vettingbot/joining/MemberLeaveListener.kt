@@ -22,7 +22,6 @@ package vettingbot.joining
 import discord4j.core.event.domain.guild.MemberLeaveEvent
 import org.springframework.stereotype.Component
 import vettingbot.discord.DiscordEventListener
-import vettingbot.util.awaitCompletion
 import vettingbot.vetting.VettingChannelService
 
 @Component
@@ -30,7 +29,6 @@ class MemberLeaveListener(private val vettingChannelCreator: VettingChannelServi
     DiscordEventListener<MemberLeaveEvent> {
     override suspend fun on(event: MemberLeaveEvent) {
         val channel = vettingChannelCreator.getVettingChannelFor(event.client, event.guildId, event.user.id) ?: return
-        channel.delete().awaitCompletion()
-        vettingChannelCreator.deleteVettingChannel(channel.id)
+        vettingChannelCreator.deleteVettingChannel(channel)
     }
 }
