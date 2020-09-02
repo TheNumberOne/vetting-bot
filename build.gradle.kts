@@ -20,11 +20,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.4.0-M1"
-    id("io.spring.dependency-management") version "1.0.9.RELEASE"
+    id("org.springframework.boot") version "2.4.0-M2"
+    id("io.spring.dependency-management") version "1.0.10.RELEASE"
     id("com.github.ben-manes.versions") version "0.29.0"
-    kotlin("jvm") version "1.3.72"
-    kotlin("plugin.spring") version "1.3.72"
+    kotlin("jvm") version "1.4.0"
+    kotlin("plugin.spring") version "1.4.0"
 }
 
 group = "vettingbot"
@@ -46,7 +46,7 @@ repositories {
 }
 
 dependencies {
-    implementation(platform("io.projectreactor:reactor-bom:2020.0.0-M1"))
+//    implementation(platform("io.projectreactor:reactor-bom:2020.0.0-M2"))
     implementation("com.discord4j:discord4j-core:3.2.0-SNAPSHOT")
     implementation("org.liquigraph:liquigraph-core:4.0.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")

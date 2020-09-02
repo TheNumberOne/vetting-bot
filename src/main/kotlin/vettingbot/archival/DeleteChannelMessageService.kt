@@ -19,13 +19,19 @@
 
 package vettingbot.archival
 
-import discord4j.common.util.Snowflake
-import kotlinx.coroutines.flow.Flow
-import org.springframework.data.domain.Pageable
-import org.springframework.data.repository.reactive.ReactiveCrudRepository
+import discord4j.core.`object`.entity.channel.TextChannel
+import discord4j.core.`object`.reaction.ReactionEmoji
+import org.springframework.stereotype.Component
+import vettingbot.util.awaitCompletion
+import vettingbot.util.sendEmbed
 
-interface ChannelArchiveRepository : ReactiveCrudRepository<ChannelArchive, Long> {
-    suspend fun findByGuildIdAndUserId(guildId: Snowflake, userId: Snowflake): ChannelArchive?
-    suspend fun countByGuildId(guildId: Snowflake): Long
-    fun findByGuildId(guildId: Snowflake, page: Pageable): Flow<ChannelArchive>
+@Component
+class DeleteChannelMessageService(private val repo: DeleteMessageRepository) {
+    suspend fun addDeleteMessage(channel: TextChannel) {
+        val message = channel.sendEmbed {
+            description("React with ❌ below to delete this channel.")
+        }
+        message.addReaction(ReactionEmoji.unicode("❌")).awaitCompletion()
+        repo.save(DeleteMessage(channel.guildId, channel.id, message.id.asLong(), "❌")).awaitCompletion()
+    }
 }

@@ -21,11 +21,8 @@ package vettingbot.archival
 
 import discord4j.common.util.Snowflake
 import kotlinx.coroutines.flow.Flow
-import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.reactive.ReactiveCrudRepository
 
-interface ChannelArchiveRepository : ReactiveCrudRepository<ChannelArchive, Long> {
-    suspend fun findByGuildIdAndUserId(guildId: Snowflake, userId: Snowflake): ChannelArchive?
-    suspend fun countByGuildId(guildId: Snowflake): Long
-    fun findByGuildId(guildId: Snowflake, page: Pageable): Flow<ChannelArchive>
+interface DeleteMessageRepository : ReactiveCrudRepository<DeleteMessage, Long> {
+    fun findByGuildId(guildId: Snowflake): Flow<DeleteMessage>
 }

@@ -72,6 +72,7 @@ class CommandListener(
             logger.error("Error while executing command: $content", e)
             val message = e.errorResponse.nullable?.fields?.get("message") as? String
                 ?: e.errorResponse.nullable?.fields?.get("after") as? String
+                ?: e.status.reasonPhrase()
                 ?: "Unknown discord error."
             event.respondEmbed {
                 title("Discord Error")

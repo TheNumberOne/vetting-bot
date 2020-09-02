@@ -17,15 +17,19 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.archival
+package vettingbot.util
 
-import discord4j.common.util.Snowflake
-import kotlinx.coroutines.flow.Flow
-import org.springframework.data.domain.Pageable
-import org.springframework.data.repository.reactive.ReactiveCrudRepository
-
-interface ChannelArchiveRepository : ReactiveCrudRepository<ChannelArchive, Long> {
-    suspend fun findByGuildIdAndUserId(guildId: Snowflake, userId: Snowflake): ChannelArchive?
-    suspend fun countByGuildId(guildId: Snowflake): Long
-    fun findByGuildId(guildId: Snowflake, page: Pageable): Flow<ChannelArchive>
-}
+val <T> Iterable<T>.s
+    get() = run {
+        val iter = iterator()
+        if (!iter.hasNext()) {
+            "s"
+        } else {
+            iter.next()
+            if (iter.hasNext()) {
+                "s"
+            } else {
+                ""
+            }
+        }
+    }

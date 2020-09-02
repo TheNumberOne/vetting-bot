@@ -29,10 +29,8 @@ import discord4j.core.`object`.entity.channel.GuildMessageChannel
 import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.rest.util.Permission
 import discord4j.rest.util.PermissionSet
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
@@ -232,13 +230,13 @@ class VettingChannelService(
         }!!
     }
 
-    private suspend fun getVettingCategoriesData(guild: Guild): Flow<CategoryData> {
+    private suspend fun getVettingCategoriesData(guild: Guild): List<CategoryData> {
         return transactionalOperator.executeAndAwait {
-            wrapExceptions { categoryDataRepository.findByGuildId(guild.id).asFlow() }
+            wrapExceptions { categoryDataRepository.findByGuildId(guild.id).asFlow().toList() }
         }!!
     }
 
-    suspend fun getVettingCategories(guild: Guild): Flow<Category> {
+    suspend fun getVettingCategories(guild: Guild): List<Category> {
         val client = guild.client
         return getVettingCategoriesData(guild).mapNotNull { data ->
             wrapExceptions {

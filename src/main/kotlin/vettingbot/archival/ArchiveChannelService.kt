@@ -29,11 +29,15 @@ import discord4j.rest.util.Permission
 import discord4j.rest.util.PermissionSet
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
@@ -83,7 +87,7 @@ class ArchiveChannelService(
         trans.executeAndAwait {
             val channelArchive = getOrCreateChannelArchive(channel.guildId, userId)
             val inserted = messageArchiveRepository.saveAll(messages).asFlow().toList()
-            val lastMessage = messages.map { it.time }.max() ?: channelArchive.lastMessageArchived
+            val lastMessage = messages.map { it.time }.maxOrNull() ?: channelArchive.lastMessageArchived
             val newArchive = channelArchive.copy(
                 lastMessageArchived = lastMessage,
                 recordMessagesAfter = maxOf(lastMessage, channelArchive.recordMessagesAfter),
@@ -202,5 +206,13 @@ class ArchiveChannelService(
         launch { webhook.deleteWithToken().awaitCompletion() }
         launch { startMessage.delete().awaitCompletion() }
         launch { channel.edit { it.setPermissionOverwrites(previousOverwrites) } }
+    }
+
+    suspend fun findArchives(guildId: Snowflake, page: Pageable): Page<Snowflake> {
+        return trans.executeAndAwait {
+            val total = channelArchiveRepository.countByGuildId(guildId)
+            val items = channelArchiveRepository.findByGuildId(guildId, page).map { it.userId }.toList()
+            PageImpl(items, page, total)
+        }!!
     }
 }

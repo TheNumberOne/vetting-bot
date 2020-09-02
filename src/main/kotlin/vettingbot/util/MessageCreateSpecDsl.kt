@@ -168,7 +168,7 @@ class EmbedCreateSpecDsl(val spec: EmbedCreateSpec) {
         spec.setColor(color)
     }
 
-    fun footer(text: String, icon: String) {
+    fun footer(text: String, icon: String? = null) {
         spec.setFooter(text, icon)
     }
 
