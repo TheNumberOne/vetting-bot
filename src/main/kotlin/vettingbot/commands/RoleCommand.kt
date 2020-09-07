@@ -129,8 +129,8 @@ class RoleCommand(
             runImpl(
                 message,
                 args,
-                guildConfigService::getVettedRole,
-                guildConfigService::setVettedRole,
+                guildConfigService::getVettingRole,
+                guildConfigService::setVettingRole,
                 "vetting",
                 "assigned to members as they go through the vetting process"
             )
