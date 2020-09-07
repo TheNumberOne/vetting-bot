@@ -14,13 +14,13 @@ Features include
 
 Change the prefix to something that works with the other bots.
 ```shell script
-!vettingprefix v!
+v!prefix v!
 ```
 
 Set the welcome message.
 
 ```
-v!vettext
+v!welcome
 Welcome to the server <member>!
 Please follow these instructions to verify: 1. 2. 3
 ```
@@ -59,7 +59,7 @@ Displays help information for the commands the user can run. A command name can 
  command.
 
 ### Admin Commands
-* **TODO** `!vettingprefix <prefix>`  
+* **TODO** `!prefix <prefix>`  
 Sets the prefix of the bot to the specified prefix for your server.
 * **TODO** `!mod[s] add <role>`  
 Adds a role to the list of roles that can access the verification channels in addition to administrators.
@@ -68,24 +68,19 @@ Removes a role from the list of roles that can access the verification channels.
  access through this.
 * **TODO** `!mod[s]`  
 Lists the roles that can currently access the verification channel in addition to the mod channels.
-* **TODO** `!vettext <message>`  
+* **TODO** `!welcome <message>`  
 Sets the vet text to the specified message, with \<member\> in the message replaced with a mention of the user that
 joined the server. The default is
 `Welcome to the server!`
-* **TODO** `!vettext`  
+* **TODO** `!welcome`  
 Displays the current vetting text
-* **TODO** `!chatcategory <category>`  
+* **TODO** `!category <category>`  
 Sets the category or channel that vetting chats are created under. If the category has 50 channels under it, then
 further channels will be created below it rather than within it. If a channel is passed, channels are created
 directly below it. `first` can be passed to specify that channels are created before all other channels. `last` (default) can
  be passed to specify that channels are created after all other channels. 
-* **TODO** `!chatcategory`  
+* **TODO** `!category`  
 Displays the channel or category that vetting chats are created under.
-* **TODO** `!reviewcategory <category>`  
-Sets the category or channel that vetting chats are created under when retrieved for review. The syntax and behavior
- is otherwise the same as `!chatcategory <category>`.
-* **TODO** `!reviewcategory`  
-Displays the channel or category that vetting chats are created under when retrieved for review.
 * **TODO** `!command[s] new <command name> <help text>`  
 Creates a new command with the name `<command name>` that can only be executed within active vetting channels.
 The `<help text>` is displayed when someone runs `!help` for the command.
@@ -115,15 +110,15 @@ Removes the actions from the command. The syntax is the same as `!command set`, 
 Deletes the specified command.
 * **TODO** `!command[s] [update-]help <command name> <help text>`  
 Changes the help text for the command.
-
-### Moderator Commands
-
-These commands can be executed by moderators in addition to the custom vetting commands defined by the administrator.
-* **TODO** `!review @user`  
+* **TODO** `!archive @user`  
   Recreates the channel that was used to vet the user.
 * **TODO** `!delete`  
   Deletes the current review channel. (Can only be executed within the review channel.) The review channel can be
    recreated later.
+
+### Moderator Commands
+
+These commands can be executed by moderators in addition to the custom vetting commands defined by the administrator.
 
 ### Everyone commands
 

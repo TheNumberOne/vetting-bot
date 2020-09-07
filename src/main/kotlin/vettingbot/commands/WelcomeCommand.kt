@@ -30,11 +30,11 @@ import vettingbot.util.nullable
 import vettingbot.util.respondEmbed
 
 @Component
-class VetTextCommand(
+class WelcomeCommand(
     private val guildConfigService: GuildConfigService
 ) : AbstractCommand(
-    "vettext",
-    "Manage the vetting message sent to new members.",
+    "welcome",
+    "Manage the vetting message sent to members sent in newly created channels.",
     Permission.ADMINISTRATOR
 ) {
     override suspend fun displayHelp(guildId: Snowflake) = embedDsl {

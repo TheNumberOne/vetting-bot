@@ -46,10 +46,10 @@ private fun parseEmoji(emoji: String): ReactionEmoji? {
 }
 
 @Component
-class VetMessageCommand(
+class MessageCommand(
     private val messageService: MessageService
 ) : AbstractCommand(
-    "vetmessage",
+    "message",
     "Create a message that users can start the vetting process by reacting to.",
     Permission.ADMINISTRATOR
 ) {
