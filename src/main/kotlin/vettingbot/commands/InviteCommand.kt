@@ -28,7 +28,7 @@ import vettingbot.util.respondEmbed
 class InviteCommand: AbstractCommand("invite", "Create a link to invite this bot to a server.") {
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val clientId = message.client.selfId.asString()
-        val permissions = 268512342
+        val permissions = 805432534
         val url = "https://discord.com/api/oauth2/authorize?client_id=$clientId&permissions=$permissions&scope=bot"
         message.respondEmbed {
             description("[Invitation link]($url)")
