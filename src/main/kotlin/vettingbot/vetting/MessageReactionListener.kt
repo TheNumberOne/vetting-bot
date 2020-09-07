@@ -33,6 +33,7 @@ class MessageReactionListener(private val messageService: MessageService, privat
     DiscordEventListener<ReactionAddEvent> {
     override suspend fun on(event: ReactionAddEvent) = coroutineScope {
         val member = event.member.nullable ?: return@coroutineScope
+        if (member.isBot) return@coroutineScope
 
         val messageId = event.messageId
         val emoji = event.emoji

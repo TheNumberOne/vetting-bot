@@ -41,6 +41,7 @@ import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import reactor.kotlin.core.publisher.cast
 import vettingbot.archival.ArchiveChannelService
+import vettingbot.mod.ModService
 import vettingbot.util.awaitCompletion
 import vettingbot.util.onDiscordNotFound
 import vettingbot.util.toSnowflake
@@ -55,7 +56,8 @@ class VettingChannelService(
     private val vettingChannelRepository: VettingChannelRepository,
     private val categoryDataRepository: CategoryDataRepository,
     private val transactionalOperator: TransactionalOperator,
-    private val archiveChannelService: ArchiveChannelService
+    private val archiveChannelService: ArchiveChannelService,
+    private val modService: ModService,
 ) {
     suspend fun getOrCreateChannelFor(member: Member): GuildMessageChannel {
         val channel = wrapExceptions { getVettingChannelFor(member.client, member.guildId, member.id) }
@@ -118,6 +120,8 @@ class VettingChannelService(
         val category = wrapExceptions { getOrCreateNonFullVettingCategory(guild) }
 
         val channelName = "vetting-${member.displayName}-${member.id.asString()}"
+        val selfId = member.client.selfId
+        val modRoles = modService.getModRoles(guild.id)
         val channel = wrapExceptions {
             guild.createTextChannel {
                 it.apply {
@@ -137,8 +141,15 @@ class VettingChannelService(
                                     Permission.VIEW_CHANNEL
                                 ),
                                 PermissionSet.none()
+                            ),
+                            PermissionOverwrite.forMember(
+                                selfId,
+                                PermissionSet.all(),
+                                PermissionSet.none()
                             )
-                        ) + category.permissionOverwrites
+                        ) + modRoles.map { roleId ->
+                            PermissionOverwrite.forRole(roleId, PermissionSet.all(), PermissionSet.none())
+                        }
                     )
                 }
             }.awaitSingle()

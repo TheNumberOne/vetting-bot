@@ -17,23 +17,15 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.util
+package vettingbot.banwatch
 
 import discord4j.common.util.Snowflake
+import org.neo4j.springframework.data.core.schema.GeneratedValue
+import org.neo4j.springframework.data.core.schema.Id
+import java.time.Instant
 
-fun Long.toSnowflake(): Snowflake = Snowflake.of(this)
-
-private val SNOWFLAKE_REGEX = Regex("\\d+")
-
-fun findAndParseSnowflake(text: String): Snowflake? {
-    val role = SNOWFLAKE_REGEX.find(text) ?: return null
-    return Snowflake.of(role.value)
-}
-
-fun findAndParseAllSnowflakes(text: String): List<Snowflake> {
-    return SNOWFLAKE_REGEX.findAll(text).map { Snowflake.of(it.value) }.toList()
-}
-
-fun Snowflake.roleMention() = "<@&${asString()}>"
-
-fun Snowflake.memberMention() = "<@!${asString()}>"
+data class BanEntry(
+    val memberId: Snowflake,
+    val time: Instant,
+    @GeneratedValue @Id val id: Long? = null
+)

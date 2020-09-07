@@ -23,6 +23,7 @@ import discord4j.rest.http.client.ClientException
 import io.netty.handler.codec.http.HttpResponseStatus
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 suspend fun <T> Publisher<T>.awaitCompletion() {
@@ -30,6 +31,16 @@ suspend fun <T> Publisher<T>.awaitCompletion() {
 }
 
 fun <T> Mono<T>.onDiscordNotFound(f: (ClientException) -> Mono<T>): Mono<T> {
+    return onErrorResume { e ->
+        if (e is ClientException && e.status == HttpResponseStatus.NOT_FOUND) {
+            f(e)
+        } else {
+            Mono.error(e)
+        }
+    }
+}
+
+fun <T> Flux<T>.onDiscordNotFound(f: (ClientException) -> Publisher<T>): Flux<T> {
     return onErrorResume { e ->
         if (e is ClientException && e.status == HttpResponseStatus.NOT_FOUND) {
             f(e)
