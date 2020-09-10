@@ -22,16 +22,18 @@ package vettingbot.commands
 import discord4j.core.event.domain.message.MessageCreateEvent
 import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
-import vettingbot.util.respondEmbed
+import vettingbot.util.respondMessage
 
 @Component
 class InviteCommand: AbstractCommand("invite", "Create a link to invite this bot to a server.") {
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val clientId = message.client.selfId.asString()
-        val permissions = 805432534
+        val permissions = 805694678
+        //805694678
         val url = "https://discord.com/api/oauth2/authorize?client_id=$clientId&permissions=$permissions&scope=bot"
-        message.respondEmbed {
-            description("[Invitation link]($url)")
-        }
+        message.respondMessage { content(url) }
+//        message.respondEmbed {
+//            description("[Invitation link]($url)")
+//        }
     }
 }

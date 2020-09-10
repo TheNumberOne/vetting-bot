@@ -19,7 +19,9 @@
 
 package vettingbot.commands
 
+import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Permission
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.mono
@@ -32,10 +34,19 @@ import vettingbot.util.*
 
 @Component
 class ModCommand(private val modService: ModService) : AbstractCommand(
-    "mod",
+    listOf("mod", "mods"),
     "Manages the moderators that have access to the vetting channels.",
     Permission.ADMINISTRATOR
 ) {
+    override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+        description("Lists the roles that have access to the vetting channels. Use one of the subcommands to add or remove from this list.")
+        field(
+            "Syntax", """
+            `mod` - Lists the roles that have access to the vetting channels.
+        """.trimIndent()
+        )
+    }
+
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val guildId = message.guildId.nullable ?: return
         val modRoles = modService.getModRoles(guildId)
@@ -56,6 +67,15 @@ class ModCommand(private val modService: ModService) : AbstractCommand(
     override val subCommands: List<Command> = listOf(AddModCommand(), RemoveModCommand())
 
     inner class AddModCommand : AbstractCommand("add", "Adds a role to the roles that are moderators.") {
+        override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+            description("Adds to the roles that have access to the vetting channels.")
+            field(
+                "Syntax", """
+                `mod add @role` - Allow members with the @role to access vetting channels created in the future.
+            """.trimIndent()
+            )
+        }
+
         override suspend fun run(message: MessageCreateEvent, args: String) {
             val roleIds = findAndParseAllSnowflakes(args)
             if (roleIds.isEmpty()) {
@@ -90,6 +110,14 @@ class ModCommand(private val modService: ModService) : AbstractCommand(
     }
 
     inner class RemoveModCommand : AbstractCommand("remove", "Removes a role from the roles that are moderators.") {
+        override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+            description("Removes from the roles that have access to the vetting channels.")
+            field(
+                "Syntax", """
+                `mod remove @role` - Stops adding members with the @role to vetting channels created in the future. Note that they will still be able to access the vetting channels if they have a role that is allowed.
+            """.trimIndent()
+            )
+        }
 
         override suspend fun run(message: MessageCreateEvent, args: String) {
             val roleIds = findAndParseAllSnowflakes(args)

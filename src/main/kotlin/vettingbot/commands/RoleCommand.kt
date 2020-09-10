@@ -21,6 +21,7 @@ package vettingbot.commands
 
 import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Permission
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.mono
@@ -108,6 +109,16 @@ class RoleCommand(
         "Manages the role used for members who have been vetted.",
         Permission.ADMINISTRATOR
     ) {
+        override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+            description("Either displays or changes the role used for members who have been vetted.")
+            field(
+                "Syntax", """
+                `role vetted` - Display the role assigned to members after they have finished vetting.
+                `role vetted @cool` - Marks @cool as the role assigned to members after they have finished vetting.
+            """.trimIndent()
+            )
+        }
+
         override suspend fun run(message: MessageCreateEvent, args: String) {
             runImpl(
                 message,
@@ -125,6 +136,16 @@ class RoleCommand(
         "Manages the role used for members currently in the vetting process.",
         Permission.ADMINISTRATOR
     ) {
+        override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+            description("Either displays or changes the role used for members who are currently being vetted.")
+            field(
+                "Syntax", """
+                `role vetting` - Display the role assigned to members while they are being vetted.
+                `role vetting @cool` - Marks @cool as the role assigned to members while they are being vetted.
+            """.trimIndent()
+            )
+        }
+
         override suspend fun run(message: MessageCreateEvent, args: String) {
             runImpl(
                 message,

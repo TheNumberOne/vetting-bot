@@ -38,7 +38,19 @@ class VetMessageCommand(
     Permission.ADMINISTRATOR
 ) {
     override suspend fun displayHelp(guildId: Snowflake) = embedDsl {
-        field("Parameters", "`{member}` is replaced with a mention of the vetting member.")
+        field(
+            "Command Syntax", """
+            `vetmsg` - Displays the message sent to members when they start the vetting process.
+            `vetmsg message` - Sets message sent to members when they start the vetting process. This message can span multiple lines.
+        """.trimIndent()
+        )
+        field("Message Syntax", "`{member}` is replaced with a mention of the vetting member.")
+        field(
+            "Example Usage", """
+            `vetmsg Hello! Welcome to this server.` - Displays "Hello! Welcome to this server." when members begin the vetting process.
+            `vetmsg Hello {member}.` - Mentions the member when it greets the member.
+        """.trimIndent()
+        )
     }
 
     override suspend fun run(message: MessageCreateEvent, args: String) {

@@ -22,6 +22,7 @@ package vettingbot.commands
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Guild
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Permission
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -43,10 +44,31 @@ class CommandCommand(
     private val service: CustomVettingCommandsService
 ) : AbstractCommand(
     listOf("command", "commands"),
-    "Allows managing custom vetting commands",
+    "Allows managing custom vetting commands.",
     Permission.ADMINISTRATOR
 ) {
     override val subCommands: List<Command> = listOf(NewCommand(), AddCommand(), RemoveCommand(), DeleteCommand())
+
+    override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+        description("This manages custom commands that can be executed in channels created for vetting new users. Running this command lists the current commands for this server. To create or change commands, use one of the subcommands.")
+        field(
+            "Permissions", """
+            Each command is individually configured on who can run it. To determine if someone can run a custom command, the following is performed:
+            
+            1. Is the user explicitly forbidden? If so, they cannot run the command.
+            
+            2. Is the user explicitly allowed? Then, they can run the command.
+            
+            3. Does the user have a role that is forbidden to run the command? Then, they cannot run the command.
+            
+            4. Does the user have a role that is allowed to run the command? If so, then they can run the command.
+            
+            5. Is @everyone allowed to run the command? If so, the user is allowed to run the command.
+            
+            6. The user is not allowed to run the command.
+        """.trimIndent()
+        )
+    }
 
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val guildId = message.guildId.nullable ?: return
@@ -107,9 +129,46 @@ class CommandCommand(
 
 
     inner class NewCommand :
-        AbstractCommand(listOf("new", "update-set", "set", "="), "Creates a vetting command.") {
+        AbstractCommand(listOf("new", "update-set", "set", "="), "Creates or replaces a vetting command.") {
 
-        override suspend fun run(message: MessageCreateEvent, args: String) = coroutineScope<Unit> {
+        override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+            description("This creates or replaces a vetting command.")
+            field(
+                "Syntax", """
+                `command new name arguments...` - This creates a new custom command. Here are the different possible arguments.
+                
+                  • `+ @role` - Add the specified role to the person being vetted.
+                
+                  • `- @role` - Remove the specified role from the person being vetted.
+                
+                  • `kick <reason>` - Kick the person being for with the specific reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
+                  
+                  • `ban <reason>` - Ban the person being vetted for the specified reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
+                  
+                  • `allow @user` - Allow @user to run this command.
+                  
+                  • `allow @role` - Allow @role to run this command.
+                  
+                  • `forbid @user` - Forbid @user from running this command.
+                  
+                  • `forbid @role` - Forbid @role from running this command.
+            """.trimIndent()
+            )
+            field(
+                "Example Usage", """
+                `command new minor - @vetting + @vetted + @role allow @mod`
+                Creates/replaces the command `minor` which removes the @vetting role, adds the @vetted role, adds the @minor role, and can only be executed by people with the @mod role.
+                
+                `command = admin + @admin allow @admin`
+                Creates/replaces the command `admin` which adds the @admin role and can only be executed by people with the @admin role.
+                
+                `command set selfvet - @vetting + @vetted allow @everyone`
+                Creates/replaces the command `selfvet` which removes the @vetting role, adds the @vetted role, and can be executed by anyone.
+            """.trimIndent()
+            )
+        }
+
+        override suspend fun run(message: MessageCreateEvent, args: String) = coroutineScope {
             val (name, args1) = args.split(" ", limit = 2)
             val guild = message.guild.awaitFirstOrNull() ?: return@coroutineScope
             val commandArgs = parseCommandConfig(guild, args1)
@@ -127,20 +186,54 @@ class CommandCommand(
                 }
             }.awaitAll()
             val newCommand = commandArgs.addTo(CustomVettingCommandConfig(guild.id, name))
-            val result = service.createNew(newCommand)
+            val result = service.createNewOrSetExisting(newCommand)
             val prefix = guildService.getPrefix(guild.id)
             message.respondEmbed {
                 title("Add Command")
-                if (result != null) {
-                    description("Added new command `$prefix${newCommand.name}`\n\n" + getCommandDescription(result))
-                } else {
-                    description("Command already exists.")
-                }
+                description("Added new command `$prefix${newCommand.name}`\n\n" + getCommandDescription(result))
             }
         }
     }
 
     inner class AddCommand : AbstractCommand(listOf("add", "update-add", "+"), "Adds behavior to a command.") {
+
+        override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+            description("This adds behavior to an existing vetting command.")
+            field(
+                "Syntax", """
+                `command add name arguments...` - This adds to an existing custom command. Here are the different possible arguments.
+                
+                  • `+ @role` - Add the specified role to the person being vetted.
+                
+                  • `- @role` - Remove the specified role from the person being vetted.
+                
+                  • `kick <reason>` - Kick the person being vetted for the specific reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
+                  
+                  • `ban <reason>` - Ban the person being vetted for the specified reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
+                  
+                  • `allow @user` - Allow @user to run this command.
+                  
+                  • `allow @role` - Allow @role to run this command.
+                  
+                  • `forbid @user` - Forbid @user from running this command.
+                  
+                  • `forbid @role` - Forbid @role from running this command.
+            """.trimIndent()
+            )
+            field(
+                "Example Usage", """
+                `command add minor ban This is an 18+ server`
+                Edits the `minor` command so that it now bans the person being vetted. 
+                
+                `command + admin allow @Fred forbid @Weasley`
+                Edits the `admin` command so that none of the Weasley's are allowed to execute it, except Fred.
+                
+                `command + selfvet + @self-made-person`
+                Edits the `selfvet` command so that it now also adds the `@self-made-person` role.
+            """.trimIndent()
+            )
+        }
+
         override suspend fun run(message: MessageCreateEvent, args: String) =
             addOrRemoveFromCommand(message, args, true)
     }
@@ -166,6 +259,44 @@ class CommandCommand(
         AbstractCommand(listOf("remove", "update-remove", "-"), "Removes behavior from a command.") {
         override suspend fun run(message: MessageCreateEvent, args: String) =
             addOrRemoveFromCommand(message, args, false)
+
+
+        override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+            description("This removes behavior from an existing vetting command.")
+            field(
+                "Syntax", """
+                `command remove name arguments...` - Removes behavior from an existing custom command. Here are the different possible arguments.
+                
+                  • `+ @role` - The command no longer adds the specified role to the person being vetted.
+                
+                  • `- @role` - The command no longer removes the specified role from the person being vetted.
+                
+                  • `kick` - The command no longer kicks the person being vetted.
+                  
+                  • `ban` - The command no longer bans the person being vetted.
+                  
+                  • `allow @user` - The command no longer allows @user to run this command.
+                  
+                  • `allow @role` - The command no longer allows @role to run this command.
+                  
+                  • `forbid @user` - The command no longer forbids @user from running this command.
+                  
+                  • `forbid @role` - The command no longer forbids @role from running this command.
+            """.trimIndent()
+            )
+            field(
+                "Example Usage", """
+                `command - minor ban`
+                Edits the `minor` command so that it no longer bans people.
+                
+                `command remove admin forbid @Weasley`
+                Edits the `admin` command so that Weasleys aren't specifically forbidden anymore.
+                
+                `command - selfvet - @vetting + @vetted`
+                Edits the `selfvet` command so that it no longer removes the @vetting role and no longer adds the @vetted role.
+            """.trimIndent()
+            )
+        }
     }
 
     inner class DeleteCommand : AbstractCommand("delete", "Deletes a command.") {
@@ -176,6 +307,21 @@ class CommandCommand(
                 title("Delete Command")
                 description("Deleted command $args")
             }
+        }
+
+        override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+            description("This deletes vetting commands. This cannot be used to delete regular commands.")
+            field(
+                "Syntax", """
+                `command delete name` - Deletes the command named `name`.
+            """.trimIndent()
+            )
+            field(
+                "Example Usage", """
+                `command delete admin`
+                Deletes the `admin` vetting command.    
+            """.trimIndent()
+            )
         }
     }
 

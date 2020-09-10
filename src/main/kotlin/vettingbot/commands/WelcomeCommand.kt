@@ -22,6 +22,7 @@ package vettingbot.commands
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.http.client.ClientException
 import discord4j.rest.util.Permission
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -29,6 +30,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
 import vettingbot.util.awaitCompletion
+import vettingbot.util.embedDsl
 import vettingbot.util.nullable
 import vettingbot.util.respondEmbed
 import vettingbot.vetting.MessageService
@@ -53,6 +55,14 @@ class WelcomeCommand(
     "Create a welcome message that users can start the vetting process by reacting to.",
     Permission.ADMINISTRATOR
 ) {
+    override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+        field(
+            "Syntax", """
+            `welcome` - Lists links to the different welcome messages that can be used to start the vetting process in this server.
+            `welcome :reaction: message` - Creates a message with the specified content. Anytime someone who has not vetted reacts to the message with the given reaction, the vetting process is started for that person. 
+        """.trimIndent()
+        )
+    }
 
     @ExperimentalUnsignedTypes
     override suspend fun run(message: MessageCreateEvent, args: String) {

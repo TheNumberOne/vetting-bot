@@ -24,15 +24,15 @@ import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
 import vettingbot.util.nullable
 import vettingbot.util.respondEmbed
-import vettingbot.util.respondMessage
 
 @Component
-class PingCommand: AbstractCommand("ping", "Check if the bot is running.") {
+class PingCommand :
+    AbstractCommand("ping", "Check if the bot is running and get the latency between the bot and Discord.") {
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val latency = message.client
-                .getGatewayClient(message.shardInfo.index)
-                .nullable
-                ?.responseTime ?: return
+            .getGatewayClient(message.shardInfo.index)
+            .nullable
+            ?.responseTime ?: return
 
         message.respondEmbed {
             description("Latency: ${latency.toMillis()} ms")

@@ -42,7 +42,14 @@ class HelpCommand(
                 Pass the name of another command to see help for that command.
             """.trimIndent()
         )
-        field("Usage", "${guilds.getPrefix(guildId)}help [command]")
+        field("Syntax", "${guilds.getPrefix(guildId)}help [command]")
+        field(
+            "Example Usage", """
+            `help help` - Display help for the `help` command.
+            `help command new` - Display help for the `new` subcommand of `command`.
+            `help` - Display general help information.
+        """.trimIndent()
+        )
     }
 
     override suspend fun run(message: MessageCreateEvent, args: String) {

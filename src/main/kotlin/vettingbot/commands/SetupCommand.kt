@@ -66,7 +66,7 @@ class SetupCommand(
     private val messageService: MessageService,
     private val banWatchService: BanWatchService,
 ) :
-    AbstractCommand("setup", "Sets up the bot for a guild.", Permission.ADMINISTRATOR) {
+    AbstractCommand("setup", "Interactively configures the bot for this server.", Permission.ADMINISTRATOR) {
     override suspend fun run(message: MessageCreateEvent, args: String) = coroutineScope {
         val guildId = message.guildId.nullable ?: return@coroutineScope
         val guild = message.guild.awaitSingle()
@@ -230,7 +230,7 @@ class SetupCommand(
                 description("Do you wish to automatically create the vetting command `v!vet` which will complete the vetting process?")
             }.promptBoolean(userId)
             if (addVettingCommand) {
-                customVettingCommandsService.createNew(
+                customVettingCommandsService.createNewOrSetExisting(
                     CustomVettingCommandConfig(
                         guild.id,
                         "vet",
@@ -251,7 +251,7 @@ class SetupCommand(
                 description("Do you wish to automatically create the vetting command `v!ban` which will ban members who fail the verification process?")
             }.promptBoolean(userId)
             if (addBanCommand) {
-                customVettingCommandsService.createNew(
+                customVettingCommandsService.createNewOrSetExisting(
                     CustomVettingCommandConfig(
                         guild.id,
                         "ban",
@@ -271,7 +271,7 @@ class SetupCommand(
                 description("Do you wish to automatically create the vetting command `v!kick` which will kick members who fail the verification process?")
             }.promptBoolean(userId)
             if (addKickCommand) {
-                customVettingCommandsService.createNew(
+                customVettingCommandsService.createNewOrSetExisting(
                     CustomVettingCommandConfig(
                         guild.id,
                         "kick",

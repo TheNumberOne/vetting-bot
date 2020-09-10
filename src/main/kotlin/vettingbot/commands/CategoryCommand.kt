@@ -19,10 +19,12 @@
 
 package vettingbot.commands
 
+import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.channel.Category
 import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Permission
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
@@ -33,16 +35,32 @@ import org.springframework.stereotype.Component
 import reactor.kotlin.core.publisher.whenComplete
 import vettingbot.command.AbstractCommand
 import vettingbot.util.awaitCompletion
+import vettingbot.util.embedDsl
 import vettingbot.util.respondEmbed
 import vettingbot.util.sendEmbed
 import vettingbot.vetting.VettingChannelService
 
 @Component
 class CategoryCommand(private val vettingChannelService: VettingChannelService) : AbstractCommand(
-    "category",
+    listOf("category", "categories"),
     "Retrieves or sets the name of the category that new vetting channels are created under.",
     Permission.ADMINISTRATOR
 ) {
+    override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+        description("When users begin the vetting process, a channel specifically for them is created. This command allows you to create or rename the categories that these vetting channels are created under. It is possible for multiple categories to be created if there are a large number of vetting channels created.")
+        field(
+            "Syntax", """
+            `category` - Lists the names of the categories currently being used.
+            `category name` - Renames existing categories if they exist. Otherwise, new vetting channels are created under the category with the specific name. If such a category doesn't exist, then it is created.
+        """.trimIndent()
+        )
+        field(
+            "Example Usage", """
+            `category Vetting` - Renames/uses existing/creates the category named `Vetting`. New vetting channels are created under this category.
+        """.trimIndent()
+        )
+    }
+
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val guild = message.guild.awaitSingle()
         val categories = vettingChannelService.getVettingCategories(guild)

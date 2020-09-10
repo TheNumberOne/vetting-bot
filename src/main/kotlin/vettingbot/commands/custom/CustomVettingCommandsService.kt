@@ -51,16 +51,11 @@ class CustomVettingCommandsService(
      * Returns the command if it successfully created a new command.
      * Returns null if the command already exists.
      */
-    suspend fun createNew(
+    suspend fun createNewOrSetExisting(
         config: CustomVettingCommandConfig
-    ): CustomVettingCommandConfig? = trans.executeAndAwait {
-        val item = repo.findByGuildIdAndName(config.guildId, config.name)
-        if (item == null) {
-            repo.save(config).awaitSingle()
-        } else {
-            null
-        }
-    }
+    ): CustomVettingCommandConfig = trans.executeAndAwait {
+        repo.save(config).awaitSingle()
+    }!!
 
     /**
      * Returns the command if it successfully updates a command.

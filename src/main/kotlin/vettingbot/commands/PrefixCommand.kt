@@ -20,13 +20,13 @@
 package vettingbot.commands
 
 import discord4j.common.util.Snowflake
-import discord4j.core.`object`.entity.Member
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Permission
-import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
 import vettingbot.guild.GuildConfigService
+import vettingbot.util.embedDsl
 import vettingbot.util.nullable
 import vettingbot.util.respondEmbed
 import vettingbot.util.respondMessage
@@ -34,8 +34,14 @@ import vettingbot.util.respondMessage
 @Component
 class PrefixCommand(private val guildService: GuildConfigService) :
     AbstractCommand("prefix", "Set the prefix of the bot", Permission.ADMINISTRATOR) {
-    override suspend fun canExecute(guildId: Snowflake, member: Member): Boolean {
-        return member.basePermissions.awaitSingle().contains(Permission.ADMINISTRATOR)
+    override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+        description("Allows to change the prefix of the server.")
+        field(
+            "Syntax", """
+            `prefix` - Displays the current prefix that is configured.
+            `prefix newPrefix` - Sets the server's prefix to `newPrefix`.
+        """.trimIndent()
+        )
     }
 
     override suspend fun run(message: MessageCreateEvent, args: String) {
