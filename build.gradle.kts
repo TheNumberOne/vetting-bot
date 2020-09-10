@@ -22,9 +22,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.springframework.boot") version "2.4.0-M2"
     id("io.spring.dependency-management") version "1.0.10.RELEASE"
-    id("com.github.ben-manes.versions") version "0.29.0"
-    kotlin("jvm") version "1.4.0"
-    kotlin("plugin.spring") version "1.4.0"
+    id("com.github.ben-manes.versions") version "0.31.0"
+    kotlin("jvm") version "1.4.10"
+    kotlin("plugin.spring") version "1.4.10"
+    id("com.google.cloud.tools.jib") version "2.5.0"
 }
 
 group = "vettingbot"
@@ -72,5 +73,27 @@ tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict", "-Xinline-classes", "-Xopt-in=kotlin.ExperimentalUnsignedTypes")
         jvmTarget = "11"
+    }
+}
+
+jib {
+    from {
+        image = "adoptopenjdk/openjdk11:alpine"
+    }
+    to {
+        image = "thenumeralone/vettingbot:$version"
+        tags = setOf(
+            if ((version as String).endsWith("SNAPSHOT")) {
+                "latest-snapshot"
+            } else {
+                "latest"
+            }
+        )
+    }
+    extraDirectories {
+        setPaths("src/main/jib")
+        permissions = mapOf(
+            "/wait-for" to "755"
+        )
     }
 }

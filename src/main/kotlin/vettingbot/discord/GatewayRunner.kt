@@ -43,8 +43,6 @@ class GatewayRunner(
 
     override fun run(vararg args: String?) {
         start()
-        readLine()
-        stop()
     }
 
     fun start() {
