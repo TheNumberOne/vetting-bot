@@ -3,7 +3,7 @@ services:
   bot:
     image: "thenumeralone/vettingbot:latest-snapshot"
     env_file:
-      - secrets.env
+      - bot.env
     depends_on:
       - db
     entrypoint: [ "/wait-for", "db:7687", "--", "java", "-cp", "/app/resources:/app/classes:/app/libs/*", "vettingbot.VettingBotKt" ]
