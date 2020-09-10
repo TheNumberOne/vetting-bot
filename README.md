@@ -20,7 +20,7 @@ Displays help information for the commands the user can run. A command name can 
  command.
 
 ### Admin Commands
-* `v!archive`
+* `v!archive`  
   Lists the users who have been mostly recently vetted.
 * `v!archive @user`  
   Recreates the channel that was used to vet the user.
