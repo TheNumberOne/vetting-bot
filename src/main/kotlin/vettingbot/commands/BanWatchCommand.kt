@@ -37,10 +37,23 @@ class BanWatchCommand(private val banWatchService: BanWatchService) :
     ) {
     override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit {
         return embedDsl {
-            description("Pass no arguments to see if enabled or not, as well as the settings. To enable, pass an amount of time as the first argument and then the maximum number of kicks or bans a moderator can perform in that time as the second argument.\n**WARNING: This bot cannot remove moderator roles that are above all this bot's roles.**")
+            description(
+                """
+                Ban Watch is a feature that removes moderator roles from users who ban or kick too many people. This is useful in the event a server is hacked or if a moderator goes rogue.
+                
+                **WARNING: This bot cannot remove moderator roles that are above all this bot's roles.**
+            """.trimIndent()
+            )
+            field(
+                "Syntax", """
+                `banwatch` - Displays if ban watch is enabled, along with relevant settings.
+                `banwatch time n` - Enables ban watch if not previously enabled, and configures it to remove moderator roles from a user if they ban or kick `n` users within `time`. For help on how to format the time parameter, run `help time.`
+                `banwatch disable` - Disables ban watch.
+            """.trimIndent()
+            )
             field(
                 "Example usage",
-                "`banwatch`—Displays current ban watch settings.\n`banwatch 30m 5`—Configures ban watches to remove moderators who remove or kick more than 5 people within 30 minutes."
+                "`banwatch 30m 5` — Configures ban watches to remove moderators who remove or kick more than 5 people within 30 minutes."
             )
         }
     }
@@ -64,6 +77,11 @@ class BanWatchCommand(private val banWatchService: BanWatchService) :
                 }
             }
             return
+        }
+
+        if (args == "disable") {
+            banWatchService.disable(guildId)
+            message.respondEmbed { description("Disabled ban watch.") }
         }
 
         val parts = args.split(" ")

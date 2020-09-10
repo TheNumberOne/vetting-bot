@@ -19,10 +19,12 @@
 
 package vettingbot.commands
 
+import discord4j.common.util.Snowflake
 import discord4j.core.`object`.PermissionOverwrite
 import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.event.domain.message.ReactionAddEvent
+import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Permission
 import discord4j.rest.util.PermissionSet
 import kotlinx.coroutines.coroutineScope
@@ -46,6 +48,24 @@ class ArchiveCommand(
     private val deleteChannelMessageService: DeleteChannelMessageService
 ) :
     AbstractCommand("archive", "Allows access to archives of vetting messages.", Permission.ADMINISTRATOR) {
+
+    override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
+        description("This command allows administrators to browse messages created in vetting channels that have been deleted.")
+        field(
+            "Syntax", """
+            `archive` - With no parameters, this gives a page of the most recent archives created or updated.
+            `archive @user` - Recreates the vetting channel for `@user`. Only the runner of the command has access to the created channel by default.
+            `archive userId` - Recreates the vetting channel for the user with the specified id.
+        """.trimIndent()
+        )
+        field(
+            "Examples", """
+            `archive 87468527490569087` - Recreates the vetting channel for the user with id 87468527490569087.
+            `archive @my_buddy` - Recreates the vetting channel for @my_buddy.
+        """.trimIndent()
+        )
+    }
+
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val guildId = message.guildId.nullable ?: return
         val member = message.member.nullable ?: return

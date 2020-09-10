@@ -27,10 +27,7 @@ import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
 import vettingbot.command.CommandsService
 import vettingbot.guild.GuildConfigService
-import vettingbot.util.embedDsl
-import vettingbot.util.nullable
-import vettingbot.util.respondEmbed
-import vettingbot.util.respondMessage
+import vettingbot.util.*
 
 @Component
 class HelpCommand(
@@ -48,7 +45,6 @@ class HelpCommand(
         field("Usage", "${guilds.getPrefix(guildId)}help [command]")
     }
 
-
     override suspend fun run(message: MessageCreateEvent, args: String) {
         val guildId = message.guildId.nullable ?: return
         val member = message.member.nullable ?: return
@@ -56,6 +52,13 @@ class HelpCommand(
 
         val commandNames = args.removePrefix(prefix).split(" ").filter { it.isNotBlank() }
 
+        if (args == "time") {
+            message.respondEmbed {
+                title("Time Parameters")
+                displayDurationHelp()
+            }
+            return
+        }
 
         if (commandNames.isEmpty()) {
             message.respondEmbed {
@@ -63,6 +66,8 @@ class HelpCommand(
                 description(
                     """
                     |Vetting Bot is a bot used for vetting new members to servers.
+                    |
+                    |Run the `${prefix}setup` command to be guided through setting up the bot.
                     |${if (guilds.isEnabled(guildId)) "Vetting is currently enabled for this server." else "**Vetting is currently not enabled for this server.**"}
                     """.trimMargin()
                 )

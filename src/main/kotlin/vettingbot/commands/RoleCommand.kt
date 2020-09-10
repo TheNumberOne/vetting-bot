@@ -65,7 +65,7 @@ class RoleCommand(
                 if (beforeRole == null) {
                     description("There is currently no $nameLower role set for this server.")
                 } else {
-                    description("The ${beforeRole.roleMention()} role is $description.")
+                    description("The ${beforeRole.roleMention(guildId)} role is $description.")
                 }
             }
             return
@@ -95,10 +95,10 @@ class RoleCommand(
             title("$nameCapitalized Role")
             if (beforeRole != null) {
                 description("Changed the role $description.")
-                field("Before", beforeRole.roleMention())
-                field("After", roleId.roleMention())
+                field("Before", beforeRole.roleMention(guildId))
+                field("After", roleId.roleMention(guildId))
             } else {
-                description("Set the role $description to ${roleId.roleMention()}")
+                description("Set the role $description to ${roleId.roleMention(guildId)}")
             }
         }
     }

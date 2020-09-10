@@ -78,10 +78,10 @@ class CommandCommand(
             lines += "Kicks the user being vetted" + command.kickReason?.let { " with reason \"$it\"" } + "."
         } else {
             if (command.addRoles.isNotEmpty()) {
-                lines += "Adds roles: " + command.addRoles.joinToString { it.roleMention() }
+                lines += "Adds roles: " + command.addRoles.joinToString { it.roleMention(command.guildId) }
             }
             if (command.removeRoles.isNotEmpty()) {
-                lines += "Removes roles: " + command.removeRoles.joinToString { it.roleMention() }
+                lines += "Removes roles: " + command.removeRoles.joinToString { it.roleMention(command.guildId) }
             }
             if (command.addRoles.isEmpty() && command.removeRoles.isEmpty()) {
                 lines += "Does nothing."
@@ -94,10 +94,10 @@ class CommandCommand(
             lines += "Allowed users: " + command.allowedUsers.joinToString { it.memberMention() }
         }
         if (command.forbiddenRoles.isNotEmpty()) {
-            lines += "Forbidden roles: " + command.forbiddenRoles.joinToString { it.roleMention() }
+            lines += "Forbidden roles: " + command.forbiddenRoles.joinToString { it.roleMention(command.guildId) }
         }
         if (command.allowedRoles.isNotEmpty()) {
-            lines += "Allowed roles: " + command.allowedRoles.joinToString { it.roleMention() }
+            lines += "Allowed roles: " + command.allowedRoles.joinToString { it.roleMention(command.guildId) }
         }
         if (command.allowedRoles.isEmpty() && command.allowedUsers.isEmpty()) {
             lines += "**Warning:** Nobody can execute the command."
@@ -118,7 +118,7 @@ class CommandCommand(
                     guild.getRoleById(role).onDiscordNotFound {
                         mono {
                             message.respondEmbed {
-                                description(role.roleMention() + " is not a valid role.")
+                                description(role.roleMention(guild.id) + " is not a valid role.")
                             }
                             cancel()
                             null

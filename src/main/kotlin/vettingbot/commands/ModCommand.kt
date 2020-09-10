@@ -44,7 +44,11 @@ class ModCommand(private val modService: ModService) : AbstractCommand(
             if (modRoles.isEmpty()) {
                 description("There are currently no roles that have access to vetting channels by default.")
             } else {
-                description("These roles have access to vetting channels by default: " + modRoles.joinToString(", ") { it.roleMention() })
+                description("These roles have access to vetting channels by default: " + modRoles.joinToString(", ") {
+                    it.roleMention(
+                        guildId
+                    )
+                })
             }
         }
     }
@@ -80,7 +84,7 @@ class ModCommand(private val modService: ModService) : AbstractCommand(
             modService.addModRoles(guild.id, roleIds)
             message.respondEmbed {
                 title("Add Moderator Roles")
-                description("Added moderator roles: " + roleIds.joinToString(", ") { it.roleMention() })
+                description("Added moderator roles: " + roleIds.joinToString(", ") { it.roleMention(guild.id) })
             }
         }
     }
@@ -115,7 +119,7 @@ class ModCommand(private val modService: ModService) : AbstractCommand(
             modService.removeModRoles(guild.id, roleIds)
             message.respondEmbed {
                 title("Remove Moderator Roles")
-                description("Removed moderator roles: " + roleIds.joinToString(", ") { it.roleMention() })
+                description("Removed moderator roles: " + roleIds.joinToString(", ") { it.roleMention(guild.id) })
             }
         }
     }

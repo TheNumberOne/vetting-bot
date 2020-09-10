@@ -34,6 +34,6 @@ fun findAndParseAllSnowflakes(text: String): List<Snowflake> {
     return SNOWFLAKE_REGEX.findAll(text).map { Snowflake.of(it.value) }.toList()
 }
 
-fun Snowflake.roleMention() = "<@&${asString()}>"
+fun Snowflake.roleMention(guildId: Snowflake? = null) = if (this == guildId) "@everyone" else "<@&${asString()}>"
 
 fun Snowflake.memberMention() = "<@!${asString()}>"
