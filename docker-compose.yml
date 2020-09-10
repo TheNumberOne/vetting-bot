@@ -7,7 +7,23 @@ services:
     depends_on:
       - db
     entrypoint: [ "/wait-for", "db:7687", "--", "java", "-cp", "/app/resources:/app/classes:/app/libs/*", "vettingbot.VettingBotKt" ]
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512m
   db:
     image: "neo4j"
     env_file:
       - db.env
+    restart: always
+    volumes:
+      - data-volume:/data
+      - log-volume:/logs
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+volumes:
+  data-volume:
+  log-volume:
