@@ -40,6 +40,7 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: build
     steps:
+      - uses: actions/checkout@v2
       - uses: actions/cache@v1
         with:
           path: ~/.gradle/caches
