@@ -80,7 +80,6 @@ class SetupCommand(
                         && it.message.author.nullable?.id == member.id
             }
             .map { it.message.content }
-            .timeout(Duration.ofMinutes(5))
 
         val cancelAll = { cancel() }
 
@@ -94,7 +93,7 @@ class SetupCommand(
 
         launch {
             try {
-                doSetup(guild, member.id, channel, messages)
+                doSetup(guild, member.id, channel, messages.timeout(Duration.ofMinutes(5)))
             } catch (t: TimeoutException) {
                 message.respondEmbed {
                     description("Timed out.")
