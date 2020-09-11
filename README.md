@@ -60,6 +60,12 @@ Adds a role to the list of roles that can access the vetting channels.
 Removes a role from the list of roles that can access the verification channels.
 * `v!prefix prefix`  
 Sets the prefix of the bot to the specified prefix for your server.
+* `v!prune`  
+Displays settings for automatic pruning of members who do not finish vetting and stop sending messages.
+* `v!prune disable`  
+Disables pruning.
+* `v!prune days`  
+Automatically prunes members who do not finish vetting and don't send any messages for the specified number of days.
 * `v!role vetted`  
 Displays the role assigned to members after they have been vetted.
 * `v!role vetted @role`  
