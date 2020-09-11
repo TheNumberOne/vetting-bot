@@ -578,7 +578,7 @@ class SetupCommand(
             val fix = channel.sendEmbed {
                 description(
                     """
-                    Role ${role.mention} can't see or send messages by default because of its permissions.
+                    Role ${role.id.roleMention(role.guildId)} can't see or send messages by default because of its permissions.
                     React with ✅ to fix, or 🚫 to not fix.
                     """.trimIndent()
                 )
@@ -653,7 +653,7 @@ class SetupCommand(
             val fix = channel.sendEmbed {
                 description(
                     """
-                    Role ${role.mention} can see or send messages by default.
+                    Role ${role.id.roleMention(role.guildId)} can see or send messages by default.
                     React with ✅ to fix, or 🚫 to not fix.
                     """.trimIndent()
                 )
@@ -684,7 +684,7 @@ class SetupCommand(
             createdRole
         } else {
             channel.sendEmbed {
-                description("Using role ${existingRole.mention}")
+                description("Using role ${existingRole.id.roleMention(existingRole.guildId)}")
             }
             existingRole
         }
