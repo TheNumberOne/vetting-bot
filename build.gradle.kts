@@ -77,9 +77,6 @@ tasks.withType<KotlinCompile> {
 }
 
 jib {
-    from {
-        image = "adoptopenjdk/openjdk11:alpine"
-    }
     to {
         image = "thenumeralone/vettingbot:$version"
         tags = setOf(
