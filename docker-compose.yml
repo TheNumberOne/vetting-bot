@@ -6,7 +6,6 @@ services:
       - bot.env
     depends_on:
       - db
-    entrypoint: [ "/wait-for", "db:7687", "--", "java", "-cp", "/app/resources:/app/classes:/app/libs/*", "vettingbot.VettingBotKt" ]
     restart: always
     deploy:
       resources:

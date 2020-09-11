@@ -98,10 +98,4 @@ jib {
             }
         }
     }
-    extraDirectories {
-        setPaths("src/main/jib")
-        permissions = mapOf(
-            "/wait-for" to "755"
-        )
-    }
 }

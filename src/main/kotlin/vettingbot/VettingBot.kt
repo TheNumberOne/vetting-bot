@@ -25,11 +25,48 @@ import org.springframework.boot.runApplication
 import vettingbot.configuration.BotConfig
 import vettingbot.configuration.OwnerConfig
 import vettingbot.purge.PruneConfig
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.time.Duration
+import java.time.Instant
+import kotlin.system.exitProcess
 
 @EnableConfigurationProperties(BotConfig::class, OwnerConfig::class, PruneConfig::class)
 @SpringBootApplication
 class VettingBot
 
 fun main(args: Array<String>) {
+    val waitForHost = System.getenv("WAIT_FOR_HOST")
+    if (waitForHost != null) {
+        waitForHost(waitForHost)
+    }
     runApplication<VettingBot>(*args)
+}
+
+private fun waitForHost(hostAndPort: String) {
+    val (host, portStr) = hostAndPort.split(":")
+    val port = portStr.toInt()
+    val maxTimeout = System.getenv("WAIT_FOR_HOST_TIMEOUT_MS")?.toInt() ?: 60000
+    val timeoutBetweenTries = System.getenv("WAIT_FOR_HOST_TIMEOUT_BETWEEN_TRIES")?.toInt() ?: 1000
+    val start = Instant.now()
+    val end = start + Duration.ofMillis(maxTimeout.toLong())
+    var foundPort = false
+    while (!foundPort && Instant.now() < end) {
+        val timeLeft = Duration.between(Instant.now(), end)
+        try {
+            Socket().use {
+                it.connect(InetSocketAddress(host, port), timeLeft.toMillis().toInt())
+            }
+        } catch (e: Exception) {
+            val timeToPause =
+                minOf(Duration.between(Instant.now(), end), Duration.ofMillis(timeoutBetweenTries.toLong()))
+            Thread.sleep(timeToPause.toMillis())
+            continue
+        }
+        foundPort = true
+    }
+    if (!foundPort) {
+        println("Couldn't connect to $host within $maxTimeout ms.")
+        exitProcess(1)
+    }
 }
