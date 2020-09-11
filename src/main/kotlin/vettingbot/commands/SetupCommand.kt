@@ -97,7 +97,7 @@ class SetupCommand(
 
         jobs += launch {
             try {
-                doSetup(guild, member.id, channel, messages.timeout(Duration.ofMinutes(5)))
+                doSetup(guild, member.id, channel, messages.timeout(Duration.ofMinutes(5)).filter { it != "exit" })
             } catch (t: TimeoutException) {
                 message.respondEmbed {
                     description("Timed out.")
