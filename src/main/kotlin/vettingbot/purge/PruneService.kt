@@ -17,19 +17,23 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot
+package vettingbot.purge
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.boot.runApplication
-import vettingbot.configuration.BotConfig
-import vettingbot.configuration.OwnerConfig
-import vettingbot.purge.PruneConfig
+import discord4j.common.util.Snowflake
+import kotlinx.coroutines.reactive.awaitFirstOrNull
+import org.springframework.stereotype.Component
+import vettingbot.util.awaitCompletion
 
-@EnableConfigurationProperties(BotConfig::class, OwnerConfig::class, PruneConfig::class)
-@SpringBootApplication
-class VettingBot
+@Component
+class PruneService(private val repository: PruneScheduleRepository) {
+    suspend fun findSchedule(guildId: Snowflake): Int? = repository.findById(guildId.asLong()).awaitFirstOrNull()?.days
 
-fun main(args: Array<String>) {
-    runApplication<VettingBot>(*args)
+    suspend fun schedule(guildId: Snowflake, days: Int) {
+        require(days in 1..30)
+        repository.save(PruneSchedule(guildId.asLong(), days)).awaitCompletion()
+    }
+
+    suspend fun removeSchedule(guildId: Snowflake) {
+        repository.deleteById(guildId.asLong()).awaitCompletion()
+    }
 }

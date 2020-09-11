@@ -139,12 +139,13 @@ class SetupCommand(
                     """
                     There is currently no category configured for vetting channels to be created under.
                     Do one of the following:
-                    1. Type out the name of a category to set it as the category.
-                    2. Type out the name of a category which will be created.
+                    1. Type out the id of a category to set it as the category.
+                    2. Type out the name of a category to set it as the category.
+                    3. Type out the name of a category which will be created.
                     """.trimIndent()
                 )
             }
-            val category = nextMessage.awaitSingle()
+            val category = nextMessage.awaitFirst()
             categoryCommand.createOrRenameCategories(guild, categories, category, channel)
         } else {
             val isFine = channel.sendEmbed {
@@ -160,9 +161,9 @@ class SetupCommand(
             if (!isFine) {
                 channel.sendEmbed {
                     title("Vetting Category")
-                    description("Type out the name of the new category.")
+                    description("Type out the name you wish to rename the categories to.")
                 }
-                categoryCommand.createOrRenameCategories(guild, categories, nextMessage.awaitSingle(), channel)
+                categoryCommand.createOrRenameCategories(guild, categories, nextMessage.awaitFirst(), channel)
             }
         }
         // moderators
@@ -172,7 +173,7 @@ class SetupCommand(
                 title("Moderator Roles")
                 description("There are currently no moderators roles that can access the vetting channels by default. Please mention or type out the ids of roles that can access the vetting channels.")
             }
-            val rolesIds = findAndParseAllSnowflakes(nextMessage.awaitSingle())
+            val rolesIds = findAndParseAllSnowflakes(nextMessage.awaitFirst())
             if (rolesIds.isEmpty()) {
                 channel.sendEmbed {
                     title("Moderator Roles")
@@ -466,7 +467,7 @@ class SetupCommand(
                 title("Vetting Message")
                 description("Please mention a channel. Otherwise, a new channel with the desired name will be created.")
             }
-            val nameOrId = nextMessage.awaitSingle()
+            val nameOrId = nextMessage.awaitFirst()
             val id = findAndParseSnowflake(nameOrId)
             val vettedRole = guildConfigService.getVettedRole(guild.id)
             val vettingRole = guildConfigService.getVettingRole(guild.id)
@@ -671,7 +672,7 @@ class SetupCommand(
         channel: TextChannel,
         nextMessage: Mono<String>
     ): Role {
-        val response = nextMessage.awaitSingle()
+        val response = nextMessage.awaitFirst()
         val existingRole = findAndParseSnowflake(response)
             ?.let { guild.getRoleById(it).onDiscordNotFound { Mono.empty() }.awaitFirstOrNull() }
         return if (existingRole == null) {

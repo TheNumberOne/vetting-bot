@@ -30,14 +30,13 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
+import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.whenComplete
 import vettingbot.command.AbstractCommand
-import vettingbot.util.awaitCompletion
-import vettingbot.util.embedDsl
-import vettingbot.util.respondEmbed
-import vettingbot.util.sendEmbed
+import vettingbot.util.*
 import vettingbot.vetting.VettingChannelService
 
 @Component
@@ -93,24 +92,29 @@ class CategoryCommand(private val vettingChannelService: VettingChannelService) 
         }.whenComplete().awaitCompletion()
 
         if (oldCategories.isEmpty()) {
-            val existingCategories = guild.channels.asFlow()
-                .filterIsInstance<Category>()
-                .filter {
-                    it.name.equals(name, ignoreCase = true)
-                }
-                .toList()
+            val ids = findAndParseAllSnowflakes(name)
+            val existingCategories = ids.mapNotNull {
+                guild.getChannelById(it).onDiscordNotFound { Mono.empty() }.awaitFirstOrNull() as? Category
+            }.ifEmpty {
+                guild.channels.asFlow()
+                    .filterIsInstance<Category>()
+                    .filter {
+                        it.name.equals(name, ignoreCase = true)
+                    }
+                    .toList()
+            }
+
             if (existingCategories.isEmpty()) {
-                val category = vettingChannelService.createVettingCategory(guild, name)
+                val newCategory = vettingChannelService.createVettingCategory(guild, name)
 
                 respondChannel.sendEmbed {
                     title("Categories")
-                    description("Created category ${category.mention}.")
+                    description("Created category ${newCategory.mention}.")
                 }
             } else {
                 existingCategories.forEach {
                     vettingChannelService.saveVettingCategory(it)
                 }
-
 
                 respondChannel.sendEmbed {
                     title("Categories")

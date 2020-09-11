@@ -17,19 +17,8 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot
+package vettingbot.purge
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.boot.runApplication
-import vettingbot.configuration.BotConfig
-import vettingbot.configuration.OwnerConfig
-import vettingbot.purge.PruneConfig
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
 
-@EnableConfigurationProperties(BotConfig::class, OwnerConfig::class, PruneConfig::class)
-@SpringBootApplication
-class VettingBot
-
-fun main(args: Array<String>) {
-    runApplication<VettingBot>(*args)
-}
+interface PruneScheduleRepository : ReactiveCrudRepository<PruneSchedule, Long>

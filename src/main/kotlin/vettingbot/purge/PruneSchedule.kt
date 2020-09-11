@@ -17,19 +17,10 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot
+package vettingbot.purge
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.boot.runApplication
-import vettingbot.configuration.BotConfig
-import vettingbot.configuration.OwnerConfig
-import vettingbot.purge.PruneConfig
+import org.neo4j.springframework.data.core.schema.Id
+import org.neo4j.springframework.data.core.schema.Node
 
-@EnableConfigurationProperties(BotConfig::class, OwnerConfig::class, PruneConfig::class)
-@SpringBootApplication
-class VettingBot
-
-fun main(args: Array<String>) {
-    runApplication<VettingBot>(*args)
-}
+@Node
+data class PruneSchedule(@Id val guildId: Long, val days: Int)
