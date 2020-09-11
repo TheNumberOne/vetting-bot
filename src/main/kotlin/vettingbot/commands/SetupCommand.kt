@@ -25,12 +25,13 @@ import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.Role
 import discord4j.core.`object`.entity.channel.TextChannel
+import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.event.domain.message.ReactionAddEvent
 import discord4j.rest.util.Color
 import discord4j.rest.util.Permission
 import discord4j.rest.util.PermissionSet
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.awaitFirst
@@ -48,6 +49,7 @@ import vettingbot.commands.custom.CustomVettingCommandConfig
 import vettingbot.commands.custom.CustomVettingCommandsService
 import vettingbot.guild.GuildConfigService
 import vettingbot.mod.ModService
+import vettingbot.purge.PruneService
 import vettingbot.util.*
 import vettingbot.vetting.MessageService
 import vettingbot.vetting.VettingChannelService
@@ -65,6 +67,7 @@ class SetupCommand(
     private val customVettingCommandsService: CustomVettingCommandsService,
     private val messageService: MessageService,
     private val banWatchService: BanWatchService,
+    private val pruneService: PruneService,
 ) :
     AbstractCommand("setup", "Interactively configures the bot for this server.", Permission.ADMINISTRATOR) {
     override suspend fun run(message: MessageCreateEvent, args: String) = coroutineScope {
@@ -81,9 +84,10 @@ class SetupCommand(
             }
             .map { it.message.content }
 
-        val cancelAll = { cancel() }
+        val jobs = mutableListOf<Job>()
+        val cancelAll = { jobs.forEach { it.cancel() } }
 
-        launch {
+        jobs += launch {
             messages.filter { it == "exit" }.timeout(Duration.ofHours(1), Mono.empty()).awaitFirstOrNull()
             channel.sendEmbed {
                 description("Stopped setup.")
@@ -91,7 +95,7 @@ class SetupCommand(
             cancelAll()
         }
 
-        launch {
+        jobs += launch {
             try {
                 doSetup(guild, member.id, channel, messages.timeout(Duration.ofMinutes(5)))
             } catch (t: TimeoutException) {
@@ -401,6 +405,64 @@ class SetupCommand(
                 channel.sendEmbed {
                     description("Disabled vetting.")
                 }
+            }
+        }
+
+        val pruneDays = pruneService.findSchedule(guild.id)
+        val enablePruning = channel.sendEmbed {
+            title("Pruning")
+            if (pruneDays == null) {
+                description("Currently, members who do not complete the vetting process might stay in the server indefinitely. Do you wish to automatically kick users who don't send any messages and aren't vetted for enough days?")
+            } else {
+                description("Currently, members who do not complete the vetting process and don't sent any messages are kicked after $pruneDays days. Is this fine?")
+            }
+        }.promptBoolean(userId)
+        var promptPruningDays = enablePruning && pruneDays == null
+        if (!enablePruning && pruneDays != null) {
+            val prompt = channel.sendEmbed {
+                description(
+                    """
+                    Do you wish to
+                    1. stop pruning?
+                    2. change the number of days that a member must be inactive before being pruned?
+                """.trimIndent()
+                )
+            }
+            val emojis = listOf(ReactionEmoji.unicode("1️⃣"), ReactionEmoji.unicode("2️⃣"))
+            for (emoji in emojis) {
+                prompt.addReaction(emoji).awaitCompletion()
+            }
+            val reaction = guild.client.on(ReactionAddEvent::class.java)
+                .filter { it.messageId == prompt.id && it.userId == userId && it.emoji in emojis }
+                .timeout(Duration.ofMinutes(5))
+                .map { it.emoji }
+                .awaitFirst()
+            when (emojis.indexOf(reaction)) {
+                0 -> {
+                    pruneService.removeSchedule(guild.id)
+                    channel.sendEmbed {
+                        description("Disabled pruning.")
+                    }
+                }
+                1 -> promptPruningDays = true
+                else -> error("Should never happen")
+            }
+        }
+        if (promptPruningDays) {
+            channel.sendEmbed {
+                title("Pruning")
+                description("How many days must a member not sent any messages while not being vetted before they are kicked? Please type a number between 1 and 30 inclusive.")
+            }
+            var days = nextMessage.awaitFirst().toIntOrNull()
+            while (days == null || days !in 1..30) {
+                channel.sendEmbed {
+                    description("Invalid number passed. Make sure the number is between 1 and 30.")
+                }
+                days = nextMessage.awaitFirst().toIntOrNull()
+            }
+            pruneService.schedule(guild.id, days)
+            channel.sendEmbed {
+                description("Members who do not send any messages for $days days and are not vetted are now automatically kicked.")
             }
         }
 
