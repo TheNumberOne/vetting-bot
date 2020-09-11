@@ -20,13 +20,38 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-      
-    - name: Setup Java JDK
-      uses: actions/setup-java@v1.4.0
-      with:
-        java-version: 11
-        
-    # Runs a single command using the runners shell
-    - name: Builds the program.
-      run: ./gradlew build
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Setup Java JDK
+        uses: actions/setup-java@v1.4.0
+        with:
+          java-version: 11
+
+      # Runs a single command using the runners shell
+      - name: Builds the program.
+        run: ./gradlew build
+  release:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    needs: build
+    steps:
+      - uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Setup Java JDK
+        uses: actions/setup-java@v1.4.0
+        with:
+          java-version: 11
+      - name: Publish Docker Via Gradle
+        run: ./gradlew jib
+        env:
+          ORG_GRADLE_PROJECT_dockerUsername: ${{ secrets.dockerUsername }}
+          ORG_GRADLE_PROJECT_dockerPassword: ${{ secrets.dockerPassword }}

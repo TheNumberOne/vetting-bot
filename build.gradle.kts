@@ -89,6 +89,14 @@ jib {
                 "latest"
             }
         )
+        val usr = findProperty("dockerUsername") as? String
+        val pswd = findProperty("dockerPassword") as? String
+        if (usr != null && pswd != null) {
+            auth {
+                username = usr
+                password = pswd
+            }
+        }
     }
     extraDirectories {
         setPaths("src/main/jib")
