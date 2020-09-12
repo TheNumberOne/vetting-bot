@@ -4,11 +4,12 @@ NOTE THAT THIS BOT IS CURRENTLY A WORK IN PROGRESS.
 
 Vetting Bot is a discord bot meant to be used for vetting new members to discord servers.
 Features include
-* Custom moderator roles for vetting.
-* Custom vetting text.
 * For each new user, the bot creates a vetting channel which is destroyed upon completion of verification.
 * Previously destroyed vetting channels can be recreated for review or for when a user rejoins a server.
+* Members who don't vet are eventually kicked.
 * Administrators can define custom commands for moderators to execute within vetting channels.
+* Removes roles from moderators who ban or kick too much. (To prevent angry moderators.)
+* Custom moderator roles for vetting.
 
 ## Setup
 
@@ -95,32 +96,6 @@ Ensures the bot is still running and returns its latency to Discord.
 * `v!source`  
 Displays information about the source code of the bot.
   
-## Self Hosting (TODO)
+## Self Hosting
 
-On linux, run
-```
-DISCORD_BOT_TOKEN=<your token> ./gradlew bootRun
-```
-
-### Configuration
-#### Privileged Gateway Intents
-* Server members intent
-#### Bot Permissions 
-805694678
-
-* View Audit Log
-* Manage Roles
-* Manage Channels
-* Kick Members
-* Ban Members
-* Manage Webhooks
-* View Channels
-* Send Messages
-* Manage Messages
-* Embed Links
-* Attach Files
-* Read Message History
-* Use External Emojis
-* Add Reactions 
-
-## Development (TODO)
+See the [Docker Guide](docker/README.md) for instructions on self hosting.
