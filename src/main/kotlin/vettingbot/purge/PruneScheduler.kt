@@ -29,7 +29,8 @@ import mu.KotlinLogging
 import org.springframework.stereotype.Component
 import vettingbot.discord.DiscordGatewaySubscriber
 import vettingbot.guild.GuildConfigService
-import vettingbot.util.awaitCompletion
+import vettingbot.logging.GuildLoggerService
+import vettingbot.util.sendEmbed
 import java.time.Duration
 import java.time.Instant
 
@@ -39,7 +40,8 @@ private val logger = KotlinLogging.logger {}
 class PruneScheduler(
     private val pruneService: PruneService,
     private val pruneConfig: PruneConfig,
-    private val guildConfig: GuildConfigService
+    private val guildConfig: GuildConfigService,
+    private val guildLoggerService: GuildLoggerService,
 ) : DiscordGatewaySubscriber {
     override fun subscribe(gateway: GatewayDiscordClient) {
         GlobalScope.launch {
@@ -75,10 +77,14 @@ class PruneScheduler(
     suspend fun purgeGuild(guild: Guild) {
         val daysToPurge = pruneService.findSchedule(guild.id) ?: return
         val vettingRole = guildConfig.getVettingRole(guild.id)
-        guild.prune { spec ->
+        val numPruned = guild.prune { spec ->
             spec.setDays(daysToPurge)
             vettingRole?.let { spec.addRole(it) }
-            spec.setComputePruneCount(false)
-        }.awaitCompletion()
+        }.awaitSingle()
+        if (numPruned > 0) {
+            guildLoggerService.getLogger(guild)?.sendEmbed {
+                description("Pruned $numPruned un-vetted users for inactivity.")
+            }
+        }
     }
 }

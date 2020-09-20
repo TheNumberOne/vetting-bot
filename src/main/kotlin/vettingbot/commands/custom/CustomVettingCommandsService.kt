@@ -27,6 +27,7 @@ import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import vettingbot.command.Command
 import vettingbot.guild.GuildConfigService
+import vettingbot.logging.GuildLoggerService
 import vettingbot.vetting.VettingChannelService
 
 @Component
@@ -34,11 +35,12 @@ class CustomVettingCommandsService(
     private val guildConfigService: GuildConfigService,
     private val vettingChannelService: VettingChannelService,
     private val repo: CustomVettingCommandConfigRepository,
-    private val trans: TransactionalOperator
+    private val trans: TransactionalOperator,
+    private val guildLoggerService: GuildLoggerService,
 ) {
     suspend fun findCommand(guildId: Snowflake, commandName: String): Command? {
         return repo.findByGuildIdAndName(guildId, commandName)
-            ?.let { CustomVettingCommand(guildConfigService, it, vettingChannelService) }
+            ?.let { CustomVettingCommand(guildConfigService, it, vettingChannelService, guildLoggerService) }
     }
 
     suspend fun findCommandConfigsInGuild(guildId: Snowflake): List<CustomVettingCommandConfig> {

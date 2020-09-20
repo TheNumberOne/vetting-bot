@@ -29,13 +29,18 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import reactor.kotlin.core.publisher.whenComplete
+import vettingbot.logging.GuildLoggerService
 import vettingbot.util.awaitCompletion
 import vettingbot.util.sendEmbed
 import java.time.Duration
 import java.time.Instant
 
 @Component
-class BanWatchService(private val repository: BanWatchRepository, private val trans: TransactionalOperator) {
+class BanWatchService(
+    private val repository: BanWatchRepository,
+    private val trans: TransactionalOperator,
+    private val loggerService: GuildLoggerService
+) {
     suspend fun enableBanWatch(guildId: Snowflake, interval: Duration, maxBans: Int) {
         repository.save(BanWatch(guildId, interval, maxBans)).awaitCompletion()
     }
@@ -95,6 +100,11 @@ class BanWatchService(private val repository: BanWatchRepository, private val tr
             bannerDms.sendEmbed {
                 title("Ban Watch for server ${guild.name}")
                 description("You were banning too fast and have had all roles allowing banning removed. The owner of the server has also been informed. Please contact administrators to have these roles added back.")
+            }
+
+            loggerService.getLogger(guild)?.sendEmbed {
+                title("Ban Watch")
+                description("Moderator privileges removed from ${banner.mention} for banning or kicking too fast.")
             }
         }
     }

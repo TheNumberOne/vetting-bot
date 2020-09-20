@@ -26,14 +26,19 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import kotlinx.coroutines.reactive.awaitSingle
 import vettingbot.command.AbstractCommand
 import vettingbot.guild.GuildConfigService
+import vettingbot.logging.GuildLoggerService
 import vettingbot.util.awaitCompletion
+import vettingbot.util.nullable
 import vettingbot.util.respondEmbed
+import vettingbot.util.sendEmbed
 import vettingbot.vetting.VettingChannelService
+import java.time.Instant
 
 class CustomVettingCommand(
     private val guildConfigService: GuildConfigService,
     private val config: CustomVettingCommandConfig,
-    private val vettingChannelService: VettingChannelService
+    private val vettingChannelService: VettingChannelService,
+    private val guildLoggerService: GuildLoggerService
 ) :
     AbstractCommand(config.name, "A custom command used for vetting.") {
 
@@ -58,17 +63,46 @@ class CustomVettingCommand(
             return
         }
         val member = guild.getMemberById(user).awaitSingle()
+        val mod = message.member.nullable!!
 
         val reason = if (args.isEmpty()) null else args
         if (config.ban) {
+            val avatar = member.avatarUrl
+            val tag = member.tag
+            val banReason = reason ?: config.banReason
             member.ban {
-                it.reason = reason ?: config.banReason
+                it.reason = banReason
             }.awaitCompletion()
             vettingChannelService.deleteVettingChannel(channel as GuildMessageChannel)
+            guildLoggerService.getLogger(guild)?.sendEmbed {
+                author("Ban $tag", iconUrl = avatar)
+                description("Banned user while vetting.")
+                field("User", tag, true)
+                field("Mod", mod.mention, true)
+                if (!banReason.isNullOrBlank()) {
+                    field("Reason", banReason)
+                }
+                footer("ID: ${member.id.asString()}")
+                timestamp(Instant.now())
+            }
             return
         } else if (config.kick) {
-            member.kick(reason ?: config.banReason).awaitCompletion()
+            val avatar = member.avatarUrl
+            val tag = member.tag
+            val kickReason = reason ?: config.kickReason
+            member.kick(kickReason).awaitCompletion()
             vettingChannelService.deleteVettingChannel(channel as GuildMessageChannel)
+            guildLoggerService.getLogger(guild)?.sendEmbed {
+                author("Kick $tag", iconUrl = avatar)
+                description("Kicked user while vetting.")
+                field("User", tag, true)
+                field("Mod", mod.mention, true)
+                if (!kickReason.isNullOrBlank()) {
+                    field("Reason", kickReason)
+                }
+                footer("ID: ${member.id.asString()}")
+                timestamp(Instant.now())
+            }
             return
         }
 

@@ -33,7 +33,7 @@ import vettingbot.util.respondEmbed
 @Component
 class PruneCommand(private val pruneService: PruneService) : AbstractCommand(
     "prune",
-    "Manages automatic kicking of users who have not completed the vetting process and not sent any recent messages.",
+    "Manages automatic kicking of users who have not completed the vetting process and not been online recently.",
     Permission.ADMINISTRATOR
 ) {
     override suspend fun displayHelp(guildId: Snowflake): (EmbedCreateSpec) -> Unit = embedDsl {
@@ -41,12 +41,12 @@ class PruneCommand(private val pruneService: PruneService) : AbstractCommand(
             "Syntax", """
             `prune` - Displays the current settings for the prune command.
             `prune disable` - Stops pruning users.
-            `prune n` - Kicks users who have not sent any messages for `n` days and are not vetted. `n` must be between 1 and 30 inclusive.
+            `prune n` - Kicks users who have not been online `n` days and are not vetted. `n` must be between 1 and 30 inclusive.
         """.trimIndent()
         )
         field(
             "Example Usage", """
-            `prune 5` - Kicks users who have not sent any messages for 5 days and have not completed the vetting process.
+            `prune 5` - Kicks users who have not been online for 5 days and have not completed the vetting process.
         """.trimIndent()
         )
     }
@@ -61,7 +61,7 @@ class PruneCommand(private val pruneService: PruneService) : AbstractCommand(
                 }
             } else {
                 message.respondEmbed {
-                    description("Users who have not sent any messages for $days days and have not completed the vetting process are automatically kicked.")
+                    description("Users who have not been online for $days days and have not completed the vetting process are automatically kicked.")
                 }
             }
             return
@@ -90,7 +90,7 @@ class PruneCommand(private val pruneService: PruneService) : AbstractCommand(
 
         pruneService.schedule(guildId, newDays)
         message.respondEmbed {
-            description("Users who have not sent any messages for $newDays days and have not completed the vetting process are now automatically kicked.")
+            description("Users who have not sent been online for $newDays days and have not completed the vetting process are now automatically kicked.")
         }
     }
 }

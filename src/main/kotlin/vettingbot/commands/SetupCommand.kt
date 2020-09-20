@@ -48,6 +48,7 @@ import vettingbot.command.AbstractCommand
 import vettingbot.commands.custom.CustomVettingCommandConfig
 import vettingbot.commands.custom.CustomVettingCommandsService
 import vettingbot.guild.GuildConfigService
+import vettingbot.logging.GuildLoggerService
 import vettingbot.mod.ModService
 import vettingbot.purge.PruneService
 import vettingbot.util.*
@@ -68,6 +69,7 @@ class SetupCommand(
     private val messageService: MessageService,
     private val banWatchService: BanWatchService,
     private val pruneService: PruneService,
+    private val loggerService: GuildLoggerService,
 ) :
     AbstractCommand("setup", "Interactively configures the bot for this server.", Permission.ADMINISTRATOR) {
     override suspend fun run(message: MessageCreateEvent, args: String) = coroutineScope {
@@ -385,6 +387,31 @@ class SetupCommand(
             }
         }
 
+        val logger = loggerService.getLogger(guild)
+        if (logger == null) {
+            channel.sendEmbed {
+                title("Server Logging")
+                description("Please mention a channel or type out its id to send logging messages to.")
+            }
+            var loggingChannel: TextChannel?
+            while (true) {
+                loggingChannel = findAndParseSnowflake(nextMessage.awaitFirst())?.let {
+                    guild.getChannelById(it).onDiscordNotFound { Mono.empty() }.awaitFirstOrNull() as? TextChannel
+                }
+                if (loggingChannel == null) {
+                    channel.sendEmbed {
+                        description("A valid channel was not specified. Please mention a channel or type out its id to send logging messages to.")
+                    }
+                } else {
+                    break
+                }
+            }
+            loggerService.markLogger(loggingChannel!!)
+            channel.sendEmbed {
+                description("Log messages will now be sent to ${loggingChannel.mention}")
+            }
+        }
+
         // 8. enable
         val enabled = guildConfigService.isEnabled(guild.id)
         val enable = channel.sendEmbed {
@@ -412,9 +439,9 @@ class SetupCommand(
         val enablePruning = channel.sendEmbed {
             title("Pruning")
             if (pruneDays == null) {
-                description("Currently, members who do not complete the vetting process might stay in the server indefinitely. Do you wish to automatically kick users who don't send any messages and aren't vetted for enough days?")
+                description("Currently, members who do not complete the vetting process might stay in the server indefinitely. Do you wish to automatically kick users who haven't vetted and have been offline for a while?")
             } else {
-                description("Currently, members who do not complete the vetting process and don't sent any messages are kicked after $pruneDays days. Is this fine?")
+                description("Currently, members who do not complete the vetting process and aren't online are kicked after $pruneDays days. Is this fine?")
             }
         }.promptBoolean(userId)
         var promptPruningDays = enablePruning && pruneDays == null
@@ -451,7 +478,7 @@ class SetupCommand(
         if (promptPruningDays) {
             channel.sendEmbed {
                 title("Pruning")
-                description("How many days must a member not sent any messages while not being vetted before they are kicked? Please type a number between 1 and 30 inclusive.")
+                description("How many days must a member be offline while not being vetted before they are kicked? Please type a number between 1 and 30 inclusive.")
             }
             var days = nextMessage.awaitFirst().toIntOrNull()
             while (days == null || days !in 1..30) {
@@ -462,7 +489,7 @@ class SetupCommand(
             }
             pruneService.schedule(guild.id, days)
             channel.sendEmbed {
-                description("Members who do not send any messages for $days days and are not vetted are now automatically kicked.")
+                description("Members who are offline for $days days and are not vetted are now automatically kicked.")
             }
         }
 
