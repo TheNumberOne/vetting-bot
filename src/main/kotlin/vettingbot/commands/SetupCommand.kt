@@ -55,6 +55,7 @@ import vettingbot.util.*
 import vettingbot.vetting.MessageService
 import vettingbot.vetting.VettingChannelService
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeoutException
 
 private val logger = KotlinLogging.logger {}
@@ -70,8 +71,9 @@ class SetupCommand(
     private val banWatchService: BanWatchService,
     private val pruneService: PruneService,
     private val loggerService: GuildLoggerService,
-) :
-    AbstractCommand("setup", "Interactively configures the bot for this server.", Permission.ADMINISTRATOR) {
+) : AbstractCommand("setup", "Interactively configures the bot for this server.", Permission.ADMINISTRATOR) {
+    private val runningSetups = ConcurrentHashMap<Snowflake, Job>()
+
     override suspend fun run(message: MessageCreateEvent, args: String) = coroutineScope {
         val guildId = message.guildId.nullable ?: return@coroutineScope
         val guild = message.guild.awaitSingle()
@@ -86,28 +88,35 @@ class SetupCommand(
             }
             .map { it.message.content }
 
-        val jobs = mutableListOf<Job>()
-        val cancelAll = { jobs.forEach { it.cancel() } }
 
-        jobs += launch {
-            messages.filter { it == "exit" }.timeout(Duration.ofHours(1), Mono.empty()).awaitFirstOrNull()
-            channel.sendEmbed {
-                description("Stopped setup.")
-            }
-            cancelAll()
-        }
+        val job = launch {
+            val jobs = mutableListOf<Job>()
+            val cancelAll = { jobs.forEach { it.cancel() } }
 
-        jobs += launch {
-            try {
-                doSetup(guild, member.id, channel, messages.timeout(Duration.ofMinutes(5)).filter { it != "exit" })
-            } catch (t: TimeoutException) {
-                message.respondEmbed {
-                    description("Timed out.")
-                    color(Color.RED)
+            jobs += launch {
+                messages.filter { it == "exit" }.timeout(Duration.ofHours(1), Mono.empty()).awaitFirstOrNull()
+                channel.sendEmbed {
+                    description("Stopped setup.")
                 }
+                cancelAll()
             }
-            cancelAll()
+
+            jobs += launch {
+                try {
+                    doSetup(guild, member.id, channel, messages.timeout(Duration.ofMinutes(5)).filter { it != "exit" })
+                } catch (t: TimeoutException) {
+                    message.respondEmbed {
+                        description("Timed out.")
+                        color(Color.RED)
+                    }
+                }
+                cancelAll()
+            }
         }
+        val previousSetup = runningSetups.put(guild.id, job)
+        previousSetup?.cancel()
+        job.join()
+        runningSetups.remove(guild.id, job)
     }
 
     private suspend fun doSetup(
