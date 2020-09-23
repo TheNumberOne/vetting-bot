@@ -25,9 +25,11 @@ import discord4j.rest.util.Permission
 import org.springframework.stereotype.Component
 import vettingbot.command.AbstractCommand
 import vettingbot.guild.GuildConfigService
+import vettingbot.template.showValidation
 import vettingbot.util.embedDsl
 import vettingbot.util.nullable
 import vettingbot.util.respondEmbed
+import vettingbot.vetting.vetMessageTemplate
 
 @Component
 class VetMessageCommand(
@@ -62,6 +64,12 @@ class VetMessageCommand(
                 description(vettingText)
             }
         } else {
+            vetMessageTemplate.validate(args)?.let { validationResult ->
+                message.respondEmbed {
+                    showValidation(vetMessageTemplate, args, validationResult)
+                }
+                return
+            }
             guildConfigService.setVettingText(guildId, args)
             message.respondEmbed {
                 title("Vetting Text")

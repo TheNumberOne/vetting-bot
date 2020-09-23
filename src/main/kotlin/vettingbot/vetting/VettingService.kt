@@ -64,7 +64,9 @@ class VettingService(
         archiveChannelService.restoreArchiveFor(member.id, channel)
 
         val template = guildConfigService.getVettingText(member.guildId)
-        val text = template.replace("{member}", member.mention)
+        val text = vetMessageTemplate.expand(template) {
+            this.member = member.mention
+        }
 
         channel.sendMessage {
             content(member.mention)

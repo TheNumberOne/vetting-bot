@@ -51,9 +51,11 @@ import vettingbot.guild.GuildConfigService
 import vettingbot.logging.GuildLoggerService
 import vettingbot.mod.ModService
 import vettingbot.purge.PruneService
+import vettingbot.template.showValidation
 import vettingbot.util.*
 import vettingbot.vetting.MessageService
 import vettingbot.vetting.VettingChannelService
+import vettingbot.vetting.vetMessageTemplate
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeoutException
@@ -382,16 +384,28 @@ class SetupCommand(
                     description("When a user begins the vetting process, a dedicated channel is created for them. Please type out the message that will be sent to members after they start vetting. {member} will be replaced with a mention to the member being vetted.")
                 }
                 val welcome = nextMessage.awaitFirst()
-                val setVettingMessagePrompt = channel.sendEmbed {
-                    title("Vetting Message")
-                    description("Do you wish to set the vetting message to the following?")
-                }
-                channel.sendEmbed {
-                    description(welcome)
-                }
-                if (setVettingMessagePrompt.promptBoolean(userId)) {
-                    guildConfigService.setVettingText(guild.id, welcome)
-                    break
+                val validationResult = vetMessageTemplate.validate(welcome)
+                if (validationResult == null) {
+                    val setVettingMessagePrompt = channel.sendEmbed {
+                        title("Vetting Message")
+                        description("Do you wish to set the vetting message to the following?")
+                    }
+                    channel.sendEmbed {
+                        description(welcome)
+                    }
+                    if (setVettingMessagePrompt.promptBoolean(userId)) {
+                        guildConfigService.setVettingText(guild.id, welcome)
+                        break
+                    }
+                } else {
+                    channel.sendEmbed {
+                        showValidation(vetMessageTemplate, welcome, validationResult)
+                    }
+                    if (!channel.sendEmbed {
+                            description("Do you wish to try again?")
+                        }.promptBoolean(userId)) {
+                        break
+                    }
                 }
             }
         }
