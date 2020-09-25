@@ -175,8 +175,13 @@ class CommandCommand(
         }
 
         override suspend fun run(message: MessageCreateEvent, args: String) {
-            val (name, args1) = args.split(" ", limit = 2)
             val guild = message.guild.awaitFirstOrNull() ?: return
+            val argsSplit = args.split(" ", limit = 2)
+            if (argsSplit.size < 2) {
+                message.respondEmbed { description("Missing arguments. Run `${guildService.getPrefix(guild.id)}help command new` to see usage.") }
+                return
+            }
+            val (name, args1) = argsSplit
             val commandArgs = parseCommandConfig(guild, args1)
             if (!commandArgs.validate(guild, message.message.channel.awaitSingle() as TextChannel)) {
                 return
@@ -237,8 +242,13 @@ class CommandCommand(
     }
 
     suspend fun addOrRemoveFromCommand(message: MessageCreateEvent, args: String, add: Boolean) {
-        val (name, args1) = args.split(" ", limit = 2)
         val guild = message.guild.awaitFirstOrNull() ?: return
+        val argsSplit = args.split(" ", limit = 2)
+        if (argsSplit.size < 2) {
+            message.respondEmbed { description("Missing arguments. Run `${guildService.getPrefix(guild.id)}help command ${if (add) "add" else "remove"}` to see usage.") }
+            return
+        }
+        val (name, args1) = argsSplit
         val commandArgs = parseCommandConfig(guild, args1, add)
         if (add) {
             if (!commandArgs.validate(guild, message.message.channel.awaitSingle() as TextChannel)) {
@@ -307,6 +317,10 @@ class CommandCommand(
     inner class DeleteCommand : AbstractCommand("delete", "Deletes a command.") {
         override suspend fun run(message: MessageCreateEvent, args: String) {
             val guildId = message.guildId.nullable ?: return
+            if (args.isEmpty()) {
+                message.respondEmbed { description("Missing argument. Run `${guildService.getPrefix(guildId)}help command delete` to see usage.") }
+                return
+            }
             service.delete(guildId, args)
             message.respondEmbed {
                 title("Delete Command")
