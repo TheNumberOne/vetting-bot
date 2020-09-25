@@ -17,25 +17,15 @@
  * along with VettingBot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package vettingbot.util
+package vettingbot.commands.custom
 
-import discord4j.common.util.Snowflake
+import vettingbot.template.AbstractTemplate
+import vettingbot.template.createTemplate
 
-fun Long.toSnowflake(): Snowflake = Snowflake.of(this)
-
-private val SNOWFLAKE_REGEX = Regex("\\d+")
-
-fun findAndParseSnowflake(text: String): Snowflake? {
-    val role = SNOWFLAKE_REGEX.find(text) ?: return null
-    return Snowflake.of(role.value)
+class PingTemplate : AbstractTemplate() {
+    var mod by param<String>("The moderate who vetted a person.")
+    var member by param<String>("The member being vetted.")
+    var channel by param<String>("The channel the ping message is sent in.")
 }
 
-fun findAndParseAllSnowflakes(text: String): List<Snowflake> {
-    return SNOWFLAKE_REGEX.findAll(text).map { Snowflake.of(it.value) }.toList()
-}
-
-fun Snowflake.roleMention(guildId: Snowflake? = null) = if (this == guildId) "@everyone" else "<@&${asString()}>"
-
-fun Snowflake.memberMention() = "<@!${asString()}>"
-
-fun Snowflake.channelMention() = "<#${asString()}>"
+val pingTemplate = createTemplate { PingTemplate() }

@@ -22,12 +22,16 @@ package vettingbot.template
 import vettingbot.util.EmbedCreateSpecDsl
 
 data class TemplateValidationResult(val startIndex: Int, val endIndex: Int, val type: Type) {
-    enum class Type {
-        NoParameter,
-        NestedCurlyBrace,
-        InvalidParameter,
-        UnmatchedLeftCurlyBrace,
-        UnmatchedRightCurlyBrace
+    enum class Type(val description: String) {
+        NoParameter("Missing template parameter name between curly braces."),
+        NestedCurlyBrace("Nested template parameter."),
+        InvalidParameter("Invalid parameter."),
+        UnmatchedLeftCurlyBrace("Unmatched {"),
+        UnmatchedRightCurlyBrace("Unmatched }")
+    }
+
+    override fun toString(): String {
+        return "$startIndex:$endIndex ${type.description}"
     }
 }
 

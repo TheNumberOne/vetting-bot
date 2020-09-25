@@ -41,4 +41,11 @@ data class CustomVettingCommandConfig(
     val forbiddenRoles: List<Snowflake> = emptyList(),
     val forbiddenUsers: List<Snowflake> = emptyList(),
     @Id @GeneratedValue val id: Long? = null
-)
+) {
+    init {
+        require((pingChannel == null) == (pingMessage == null)) { "Either both or neither of pingChannel and pingMessage must be specified." }
+        pingMessage?.let { pingTemplate.validateWithException(it) }
+    }
+
+    val ping get() = pingChannel != null && pingMessage != null
+}

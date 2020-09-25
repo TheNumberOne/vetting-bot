@@ -21,21 +21,22 @@ package vettingbot.commands
 
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Guild
+import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Permission
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.reactive.awaitFirstOrNull
-import kotlinx.coroutines.reactor.mono
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import vettingbot.command.AbstractCommand
 import vettingbot.command.Command
 import vettingbot.commands.custom.CustomVettingCommandConfig
 import vettingbot.commands.custom.CustomVettingCommandsService
+import vettingbot.commands.custom.pingTemplate
 import vettingbot.guild.GuildConfigService
+import vettingbot.template.showValidation
 import vettingbot.util.*
 
 @Component
@@ -105,9 +106,12 @@ class CommandCommand(
             if (command.removeRoles.isNotEmpty()) {
                 lines += "Removes roles: " + command.removeRoles.joinToString { it.roleMention(command.guildId) }
             }
-            if (command.addRoles.isEmpty() && command.removeRoles.isEmpty()) {
+            if (command.addRoles.isEmpty() && command.removeRoles.isEmpty() && !command.ping) {
                 lines += "Does nothing."
             }
+        }
+        if (command.ping) {
+            lines += "Pings in ${command.pingChannel!!.channelMention()}: ${command.pingMessage}"
         }
         if (command.forbiddenUsers.isNotEmpty()) {
             lines += "Forbidden users: " + command.forbiddenUsers.joinToString { it.memberMention() }
@@ -141,9 +145,11 @@ class CommandCommand(
                 
                   • `- @role` - Remove the specified role from the person being vetted.
                 
-                  • `kick <reason>` - Kick the person being for with the specific reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
+                  • `kick <reason>` - Kick the person being vetted for the specific reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
                   
                   • `ban <reason>` - Ban the person being vetted for the specified reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
+                  
+                  • `ping #channel message` - Pings the person being vetted in specified channel. {member} is replaced a mention of the person being vetted, {mod} is replaced with a mention of the mod who did the vetting, {channel} is replaced with a mention to the ping channel. Warning: no further settings can be specified after this argument, as they are interpreted as part of the message.
                   
                   • `allow @user` - Allow @user to run this command.
                   
@@ -162,29 +168,19 @@ class CommandCommand(
                 `command = admin + @admin allow @admin`
                 Creates/replaces the command `admin` which adds the @admin role and can only be executed by people with the @admin role.
                 
-                `command set selfvet - @vetting + @vetted allow @everyone`
-                Creates/replaces the command `selfvet` which removes the @vetting role, adds the @vetted role, and can be executed by anyone.
+                `command set selfvet - @vetting + @vetted allow @everyone ping #general Welcome to this wonderful server {member}!`
+                Creates/replaces the command `selfvet` which removes the @vetting role, adds the @vetted role, can be executed by anyone, then pings them in the #general channel.
             """.trimIndent()
             )
         }
 
-        override suspend fun run(message: MessageCreateEvent, args: String) = coroutineScope {
+        override suspend fun run(message: MessageCreateEvent, args: String) {
             val (name, args1) = args.split(" ", limit = 2)
-            val guild = message.guild.awaitFirstOrNull() ?: return@coroutineScope
+            val guild = message.guild.awaitFirstOrNull() ?: return
             val commandArgs = parseCommandConfig(guild, args1)
-            (commandArgs.addRoles + commandArgs.removeRoles).map { role ->
-                async {
-                    guild.getRoleById(role).onDiscordNotFound {
-                        mono {
-                            message.respondEmbed {
-                                description(role.roleMention(guild.id) + " is not a valid role.")
-                            }
-                            cancel()
-                            null
-                        }
-                    }
-                }
-            }.awaitAll()
+            if (!commandArgs.validate(guild, message.message.channel.awaitSingle() as TextChannel)) {
+                return
+            }
             val newCommand = commandArgs.addTo(CustomVettingCommandConfig(guild.id, name))
             val result = service.createNewOrSetExisting(newCommand)
             val prefix = guildService.getPrefix(guild.id)
@@ -211,6 +207,8 @@ class CommandCommand(
                   
                   • `ban <reason>` - Ban the person being vetted for the specified reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
                   
+                  • `ping #channel message` - Pings the person being vetted in specified channel. {member} is replaced a mention of the person being vetted, {mod} is replaced with a mention of the mod who did the vetting, {channel} is replaced with a mention to the ping channel. Warning: no further settings can be specified after this argument, as they are interpreted as part of the message.
+                  
                   • `allow @user` - Allow @user to run this command.
                   
                   • `allow @role` - Allow @role to run this command.
@@ -225,8 +223,8 @@ class CommandCommand(
                 `command add minor ban This is an 18+ server`
                 Edits the `minor` command so that it now bans the person being vetted. 
                 
-                `command + admin allow @Fred forbid @Weasley`
-                Edits the `admin` command so that none of the Weasley's are allowed to execute it, except Fred.
+                `command + admin allow @Fred forbid @Weasley ping #mod-chat Welcome no admin ;)`
+                Edits the `admin` command so that none of the Weasley's are allowed to execute it, except Fred. Pings the person being vetted in #mod-chat.
                 
                 `command + selfvet + @self-made-person`
                 Edits the `selfvet` command so that it now also adds the `@self-made-person` role.
@@ -238,10 +236,15 @@ class CommandCommand(
             addOrRemoveFromCommand(message, args, true)
     }
 
-    suspend fun addOrRemoveFromCommand(message: MessageCreateEvent, args: String, add: Boolean) = coroutineScope<Unit> {
+    suspend fun addOrRemoveFromCommand(message: MessageCreateEvent, args: String, add: Boolean) {
         val (name, args1) = args.split(" ", limit = 2)
-        val guild = message.guild.awaitFirstOrNull() ?: return@coroutineScope
+        val guild = message.guild.awaitFirstOrNull() ?: return
         val commandArgs = parseCommandConfig(guild, args1, add)
+        if (add) {
+            if (!commandArgs.validate(guild, message.message.channel.awaitSingle() as TextChannel)) {
+                return
+            }
+        }
         val result =
             service.updateCommand(guild.id, name) { if (add) commandArgs.addTo(it) else commandArgs.removeFrom(it) }
         val prefix = guildService.getPrefix(guild.id)
@@ -274,6 +277,8 @@ class CommandCommand(
                   • `kick` - The command no longer kicks the person being vetted.
                   
                   • `ban` - The command no longer bans the person being vetted.
+                  
+                  • `ping` - No longer pings the person being vetted.
                   
                   • `allow @user` - The command no longer allows @user to run this command.
                   
@@ -337,6 +342,9 @@ class CommandCommand(
         var kickReason: String? = null
         var ban = false
         var banReason: String? = null
+        var ping: Boolean = false
+        var pingChannel: Snowflake? = null
+        var pingMessage: String? = null
 
         fun addTo(config: CustomVettingCommandConfig): CustomVettingCommandConfig {
             return config.copy(
@@ -349,7 +357,9 @@ class CommandCommand(
                 allowedRoles = config.allowedRoles + allowedRoles - forbiddenRoles,
                 allowedUsers = config.allowedUsers + allowedUsers - forbiddenUsers,
                 forbiddenRoles = config.forbiddenRoles - allowedRoles + forbiddenRoles,
-                forbiddenUsers = config.forbiddenUsers - allowedUsers + forbiddenUsers
+                forbiddenUsers = config.forbiddenUsers - allowedUsers + forbiddenUsers,
+                pingChannel = pingChannel ?: config.pingChannel,
+                pingMessage = pingMessage ?: config.pingMessage,
             )
         }
 
@@ -362,8 +372,60 @@ class CommandCommand(
                 allowedRoles = config.allowedRoles - allowedRoles,
                 allowedUsers = config.allowedUsers - allowedUsers,
                 forbiddenRoles = config.forbiddenRoles - forbiddenRoles,
-                forbiddenUsers = config.forbiddenUsers - forbiddenUsers
+                forbiddenUsers = config.forbiddenUsers - forbiddenUsers,
+                pingChannel = if (ping) null else config.pingChannel,
+                pingMessage = if (ping) null else config.pingMessage,
             )
+        }
+
+        /**
+         * @return true if valid.
+         */
+        suspend fun validate(guild: Guild, errorChannel: TextChannel): Boolean {
+            val invalidIds = Flux.fromIterable(addRoles + removeRoles).flatMap { id ->
+                guild.getRoleById(id).then(Mono.empty<Snowflake>()).onDiscordNotFound { Mono.just(id) }
+            }.collectList().awaitSingle()
+
+            if (invalidIds.isNotEmpty()) {
+                errorChannel.sendEmbed {
+                    if (invalidIds.size == 1) {
+                        description(invalidIds.single().roleMention(guild.id) + " is not a valid role.")
+                    } else {
+                        description(invalidIds.joinToString { it.roleMention(guild.id) } + " are not valid roles.")
+                    }
+                }
+                return false
+            }
+
+            if (ping) {
+                val channel = pingChannel
+                if (channel == null) {
+                    errorChannel.sendEmbed {
+                        description("Missing channel for ping.")
+                    }
+                    return false
+                }
+                if (guild.getChannelById(channel).onDiscordNotFound { Mono.empty() }.awaitFirstOrNull() == null) {
+                    errorChannel.sendEmbed {
+                        description("${channel.channelMention()} is not a valid channel.")
+                    }
+                    return false
+                }
+                val message = pingMessage
+                if (message.isNullOrBlank()) {
+                    errorChannel.sendEmbed {
+                        description("Missing message for ping.")
+                    }
+                    return false
+                }
+                pingTemplate.validate(message)?.let {
+                    errorChannel.sendEmbed {
+                        showValidation(pingTemplate, message, it)
+                    }
+                    return false
+                }
+            }
+            return true
         }
     }
 
@@ -391,6 +453,16 @@ class CommandCommand(
                         config.kickReason = parts.subList(i + 1, parts.size).joinToString(" ")
                         return config
                     }
+                }
+                part == "ping" -> {
+                    config.ping = true
+                    if (i + 1 > parts.lastIndex || !includeReason) {
+                        continue@loop
+                    }
+                    val channel = findAndParseSnowflake(parts[i + 1])
+                    val message = parts.subList(i + 2, parts.size).joinToString(" ")
+                    config.pingChannel = channel
+                    config.pingMessage = message
                 }
                 part.startsWith("+") -> {
                     val snowflake = findAndParseSnowflake(part)
@@ -446,4 +518,5 @@ class CommandCommand(
 
         return config
     }
+
 }

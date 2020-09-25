@@ -181,4 +181,13 @@ class Template<T>(
         }
         return null
     }
+
+    fun validateWithException(text: String) {
+        val result = validate(text)
+        if (result != null) {
+            throw TemplateValidationError(result)
+        }
+    }
 }
+
+class TemplateValidationError(val details: TemplateValidationResult) : Exception(details.toString())

@@ -22,15 +22,15 @@ package vettingbot.commands.custom
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.channel.GuildMessageChannel
+import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.event.domain.message.MessageCreateEvent
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
+import reactor.core.publisher.Mono
 import vettingbot.command.AbstractCommand
 import vettingbot.guild.GuildConfigService
 import vettingbot.logging.GuildLoggerService
-import vettingbot.util.awaitCompletion
-import vettingbot.util.nullable
-import vettingbot.util.respondEmbed
-import vettingbot.util.sendEmbed
+import vettingbot.util.*
 import vettingbot.vetting.VettingChannelService
 import java.time.Instant
 
@@ -111,6 +111,20 @@ class CustomVettingCommand(
         }.awaitCompletion()
         if (guildConfigService.getVettedRole(guild.id) in config.addRoles) {
             vettingChannelService.deleteVettingChannel(channel as GuildMessageChannel)
+        }
+
+        val pingChannel = config.pingChannel
+        val pingMessage = config.pingMessage
+        if (pingChannel != null && pingMessage != null) {
+            val actualPingChannel =
+                guild.getChannelById(pingChannel).onDiscordNotFound { Mono.empty() }.awaitFirstOrNull() as? TextChannel
+            actualPingChannel?.sendMessage {
+                content(pingTemplate.expand(pingMessage) {
+                    this.mod = mod.mention
+                    this.member = member.mention
+                    this.channel = actualPingChannel.mention
+                })
+            }
         }
     }
 }
