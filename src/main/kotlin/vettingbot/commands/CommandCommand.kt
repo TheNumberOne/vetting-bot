@@ -140,37 +140,44 @@ class CommandCommand(
             field(
                 "Syntax", """
                 `command new name arguments...` - This creates a new custom command. Here are the different possible arguments.
-                
+                """.trimIndent()
+            )
+            field(
+                "Role Arguments", """
                   • `+ @role` - Add the specified role to the person being vetted.
-                
                   • `- @role` - Remove the specified role from the person being vetted.
-                
+                  """.trimIndent()
+            )
+            field(
+                "Kick/ban Arguments", """
                   • `kick <reason>` - Kick the person being vetted for the specific reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
-                  
                   • `ban <reason>` - Ban the person being vetted for the specified reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
-                  
-                  • `ping #channel message` - Pings the person being vetted in specified channel. {member} is replaced a mention of the person being vetted, {mod} is replaced with a mention of the mod who did the vetting, {channel} is replaced with a mention to the ping channel. Warning: no further settings can be specified after this argument, as they are interpreted as part of the message.
-                  
-                  • `allow @user` - Allow @user to run this command.
-                  
-                  • `allow @role` - Allow @role to run this command.
-                  
-                  • `forbid @user` - Forbid @user from running this command.
-                  
-                  • `forbid @role` - Forbid @role from running this command.
             """.trimIndent()
+            )
+            field(
+                "Send Arguments", """
+                • `send #channel message` - Sends a message in specified channel . { member } is replaced a mention of the person being vetted, { mod } is replaced with a mention of the mod who did the vetting, { channel } is replaced with a mention to the ping channel. Warning: no further settings can be specified after this argument, as they are interpreted as part of the message.
+            """.trimIndent()
+            )
+            field(
+                "Permission Arguments", """
+                • `allow @user` - Allow @user to run this command.
+                • `allow @role` - Allow @role to run this command.
+                • `forbid @user` - Forbid @user from running this command.
+                • `forbid @role` - Forbid @role from running this command.
+                """.trimIndent()
             )
             field(
                 "Example Usage", """
                 `command new minor - @vetting + @vetted + @role allow @mod`
-                Creates/replaces the command `minor` which removes the @vetting role, adds the @vetted role, adds the @minor role, and can only be executed by people with the @mod role.
-                
+                Creates / replaces the command `minor` which removes the @vetting role, adds the @vetted role, adds the @minor role, and can only be executed by people with the @mod role.
+    
                 `command = admin + @admin allow @admin`
-                Creates/replaces the command `admin` which adds the @admin role and can only be executed by people with the @admin role.
-                
-                `command set selfvet - @vetting + @vetted allow @everyone ping #general Welcome to this wonderful server {member}!`
-                Creates/replaces the command `selfvet` which removes the @vetting role, adds the @vetted role, can be executed by anyone, then pings them in the #general channel.
-            """.trimIndent()
+                Creates / replaces the command `admin` which adds the @admin role and can only be executed by people with the @admin role.
+    
+                `command set selfvet - @vetting + @vetted allow @everyone send #general Welcome to this wonderful server {member}!`
+                Creates / replaces the command `selfvet` which removes the @vetting role, adds the @vetted role, can be executed by anyone, then pings them in the #general channel.
+                """.trimIndent()
             )
         }
 
@@ -202,38 +209,54 @@ class CommandCommand(
             description("This adds behavior to an existing vetting command.")
             field(
                 "Syntax", """
-                `command add name arguments...` - This adds to an existing custom command. Here are the different possible arguments.
-                
+                `command add name arguments...` - This adds to an existing custom command.Here are the different possible arguments .
+                """.trimIndent()
+            )
+            field(
+                "Role Arguments", """
                   • `+ @role` - Add the specified role to the person being vetted.
-                
                   • `- @role` - Remove the specified role from the person being vetted.
-                
+                  """.trimIndent()
+            )
+            field(
+                "Kick/ban Arguments", """
                   • `kick <reason>` - Kick the person being vetted for the specific reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
-                  
                   • `ban <reason>` - Ban the person being vetted for the specified reason. Warning: no further settings can be specified after this argument, as they are interpreted as part of the reason.
-                  
-                  • `ping #channel message` - Pings the person being vetted in specified channel. {member} is replaced a mention of the person being vetted, {mod} is replaced with a mention of the mod who did the vetting, {channel} is replaced with a mention to the ping channel. Warning: no further settings can be specified after this argument, as they are interpreted as part of the message.
-                  
-                  • `allow @user` - Allow @user to run this command.
-                  
-                  • `allow @role` - Allow @role to run this command.
-                  
-                  • `forbid @user` - Forbid @user from running this command.
-                  
-                  • `forbid @role` - Forbid @role from running this command.
             """.trimIndent()
+            )
+            field(
+                "Send Arguments", """
+                • `send #channel message` - Sends a message in specified channel . { member } is replaced a mention of the person being vetted, { mod } is replaced with a mention of the mod who did the vetting, { channel } is replaced with a mention to the ping channel. Warning: no further settings can be specified after this argument, as they are interpreted as part of the message.
+            """.trimIndent()
+            )
+            field(
+                "Permission Arguments", """
+                • `allow @user` - Allow @user to run this command.
+                • `allow @role` - Allow @role to run this command.
+                • `forbid @user` - Forbid @user from running this command.
+                • `forbid @role` - Forbid @role from running this command.
+                """.trimIndent()
+            )
+            field(
+                "Example Usage", """
+                `command new minor - @vetting + @vetted + @role allow @mod`
+                Creates / replaces the command `minor` which removes the @vetting role, adds the @vetted role, adds the @minor role, and can only be executed by people with the @mod role.
+    
+                `command = admin + @admin allow @admin`
+                Creates / replaces the command `admin` which adds the @admin role and can only be executed by people with the @admin role.
+    
+                `command set selfvet - @vetting + @vetted allow @everyone send #general Welcome to this wonderful server {member}!`
+                Creates / replaces the command `selfvet` which removes the @vetting role, adds the @vetted role, can be executed by anyone, then pings them in the #general channel.
+                """.trimIndent()
             )
             field(
                 "Example Usage", """
                 `command add minor ban This is an 18+ server`
-                Edits the `minor` command so that it now bans the person being vetted. 
-                
-                `command + admin allow @Fred forbid @Weasley ping #mod-chat Welcome no admin ;)`
-                Edits the `admin` command so that none of the Weasley's are allowed to execute it, except Fred. Pings the person being vetted in #mod-chat.
-                
+                Edits the `minor` command so that it now bans the person being vetted.`command + admin allow @Fred forbid @Weasley ping #mod-chat Welcome no admin ;)`
+                Edits the `admin` command so that none of the Weasley 's are allowed to execute it, except Fred. Pings the person being vetted in #mod-chat.
+    
                 `command + selfvet + @self-made-person`
-                Edits the `selfvet` command so that it now also adds the `@self-made-person` role.
-            """.trimIndent()
+                Edits the `selfvet` command so that it now also adds the `@self-made-person` role.""".trimIndent()
             )
         }
 
@@ -278,37 +301,35 @@ class CommandCommand(
             description("This removes behavior from an existing vetting command.")
             field(
                 "Syntax", """
-                `command remove name arguments...` - Removes behavior from an existing custom command. Here are the different possible arguments.
-                
-                  • `+ @role` - The command no longer adds the specified role to the person being vetted.
-                
-                  • `- @role` - The command no longer removes the specified role from the person being vetted.
-                
-                  • `kick` - The command no longer kicks the person being vetted.
-                  
-                  • `ban` - The command no longer bans the person being vetted.
-                  
-                  • `ping` - No longer pings the person being vetted.
-                  
-                  • `allow @user` - The command no longer allows @user to run this command.
-                  
-                  • `allow @role` - The command no longer allows @role to run this command.
-                  
-                  • `forbid @user` - The command no longer forbids @user from running this command.
-                  
-                  • `forbid @role` - The command no longer forbids @role from running this command.
+            `command remove name arguments...` - Removes behavior from an existing custom command.Here are the different possible arguments .
+
+            • `+ @role` - The command no longer adds the specified role to the person being vetted.
+
+            • `- @role` - The command no longer removes the specified role from the person being vetted.
+
+            • `kick` - The command no longer kicks the person being vetted.
+
+            • `ban` - The command no longer bans the person being vetted.
+
+            • `send` - No longer sends a message when ran.
+
+            • `allow @user` - The command no longer allows @user to run this command.
+
+            • `allow @role` - The command no longer allows @role to run this command.
+
+            • `forbid @user` - The command no longer forbids @user from running this command.
+
+            • `forbid @role` - The command no longer forbids @role from running this command.
             """.trimIndent()
             )
             field(
                 "Example Usage", """
-                `command - minor ban`
-                Edits the `minor` command so that it no longer bans people.
-                
-                `command remove admin forbid @Weasley`
-                Edits the `admin` command so that Weasleys aren't specifically forbidden anymore.
-                
-                `command - selfvet - @vetting + @vetted`
-                Edits the `selfvet` command so that it no longer removes the @vetting role and no longer adds the @vetted role.
+            `command - minor ban`
+            Edits the `minor` command so that it no longer bans people.`command remove admin forbid @Weasley`
+            Edits the `admin` command so that Weasleys aren 't specifically forbidden anymore.
+
+            `command - selfvet - @vetting + @vetted`
+            Edits the `selfvet` command so that it no longer removes the @vetting role and no longer adds the @vetted role.
             """.trimIndent()
             )
         }
@@ -332,14 +353,12 @@ class CommandCommand(
             description("This deletes vetting commands. This cannot be used to delete regular commands.")
             field(
                 "Syntax", """
-                `command delete name` - Deletes the command named `name`.
-            """.trimIndent()
+            `command delete name` - Deletes the command named `name`.""".trimIndent()
             )
             field(
                 "Example Usage", """
-                `command delete admin`
-                Deletes the `admin` vetting command.    
-            """.trimIndent()
+            `command delete admin`
+            Deletes the `admin` vetting command.""".trimIndent()
             )
         }
     }
@@ -468,7 +487,7 @@ class CommandCommand(
                         return config
                     }
                 }
-                part == "ping" -> {
+                part == "send" -> {
                     config.ping = true
                     if (i + 1 > parts.lastIndex || !includeReason) {
                         continue@loop
