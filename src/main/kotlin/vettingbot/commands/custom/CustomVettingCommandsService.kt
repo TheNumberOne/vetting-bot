@@ -59,6 +59,8 @@ class CustomVettingCommandsService(
         repo.save(config.copy(name = config.name.toLowerCase())).awaitSingle()
     }!!
 
+    data class UpdateCommandResult(val previous: CustomVettingCommandConfig, val new: CustomVettingCommandConfig)
+
     /**
      * Returns the command if it successfully updates a command.
      * Returns null if the command doesn't exist.
@@ -67,11 +69,12 @@ class CustomVettingCommandsService(
         guildId: Snowflake,
         commandName: String,
         update: (CustomVettingCommandConfig) -> CustomVettingCommandConfig
-    ): CustomVettingCommandConfig? = trans.executeAndAwait {
+    ): UpdateCommandResult? = trans.executeAndAwait {
         val item = repo.findByGuildIdAndName(guildId, commandName.toLowerCase())
         if (item != null) {
             val newItem = update(item)
-            repo.save(newItem.copy(name = newItem.name.toLowerCase())).awaitSingle()
+            val result = repo.save(newItem.copy(name = newItem.name.toLowerCase())).awaitSingle()
+            UpdateCommandResult(item, result)
         } else {
             null
         }

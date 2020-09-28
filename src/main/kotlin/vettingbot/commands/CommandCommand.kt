@@ -283,10 +283,22 @@ class CommandCommand(
         val prefix = guildService.getPrefix(guild.id)
         message.respondEmbed {
             title(if (add) "Add to Command" else "Remove From Command")
-            if (result == null) {
-                description("Command doesn't exist.")
-            } else {
-                description("Updated command `$prefix${result.name}`\n\n${getCommandDescription(result)}")
+            when {
+                result == null -> {
+                    description("Command doesn't exist.")
+                }
+                result.previous != result.new -> {
+                    description("Updated command `$prefix${result.new.name}`\n\n${getCommandDescription(result.new)}")
+                }
+                else -> {
+                    description(
+                        "No changes made to command `$prefix${result.new.name}`\n\n${
+                            getCommandDescription(
+                                result.new
+                            )
+                        }"
+                    )
+                }
             }
         }
     }
