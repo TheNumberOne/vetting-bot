@@ -39,7 +39,7 @@ class CustomVettingCommandsService(
     private val guildLoggerService: GuildLoggerService,
 ) {
     suspend fun findCommand(guildId: Snowflake, commandName: String): Command? {
-        return repo.findByGuildIdAndName(guildId, commandName)
+        return repo.findByGuildIdAndName(guildId, commandName.toLowerCase())
             ?.let { CustomVettingCommand(guildConfigService, it, vettingChannelService, guildLoggerService) }
     }
 
@@ -56,7 +56,7 @@ class CustomVettingCommandsService(
     suspend fun createNewOrSetExisting(
         config: CustomVettingCommandConfig
     ): CustomVettingCommandConfig = trans.executeAndAwait {
-        repo.save(config).awaitSingle()
+        repo.save(config.copy(name = config.name.toLowerCase())).awaitSingle()
     }!!
 
     /**
@@ -68,17 +68,17 @@ class CustomVettingCommandsService(
         commandName: String,
         update: (CustomVettingCommandConfig) -> CustomVettingCommandConfig
     ): CustomVettingCommandConfig? = trans.executeAndAwait {
-        val item = repo.findByGuildIdAndName(guildId, commandName)
+        val item = repo.findByGuildIdAndName(guildId, commandName.toLowerCase())
         if (item != null) {
             val newItem = update(item)
-            repo.save(newItem).awaitSingle()
+            repo.save(newItem.copy(name = newItem.name.toLowerCase())).awaitSingle()
         } else {
             null
         }
     }
 
     suspend fun delete(guildId: Snowflake, commandName: String) = trans.executeAndAwait {
-        repo.deleteByGuildIdAndName(guildId, commandName)
+        repo.deleteByGuildIdAndName(guildId, commandName.toLowerCase())
     }
 
 }
