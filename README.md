@@ -1,7 +1,5 @@
 # Vetting Bot
 
-NOTE THAT THIS BOT IS CURRENTLY A WORK IN PROGRESS.
-
 Vetting Bot is a discord bot meant to be used for vetting new members to discord servers.
 Features include
 * For each new user, the bot creates a vetting channel which is destroyed upon completion of verification.
@@ -10,6 +8,10 @@ Features include
 * Administrators can define custom commands for moderators to execute within vetting channels.
 * Removes roles from moderators who ban or kick too much. (To prevent angry moderators.)
 * Custom moderator roles for vetting.
+
+## Invite Link
+
+[Use this link to add Vetting Bot to your server.](https://discord.com/api/oauth2/authorize?client_id=730251024325017721&permissions=805694678&scope=bot)
 
 ## Setup
 
@@ -42,6 +44,7 @@ Specifies what the command does when ran. Here are the following options.
     * `ban reason` - Bans the user from the server for the specified reason.
     * `allow @user/@role` - Allows the specific user or role to run the command.
     * `forbid @user/@role` - Forbids the specific user or role from running the command.
+    * `send #channel Message` - Sends a message in #channel to the user being vetted.
 * `v!command[s] add <command name> arguments...`  
 Adds behavior to a command. The syntax of the arguments are the same as `v!command new`
 * `v!command[s] remove <command name>`  

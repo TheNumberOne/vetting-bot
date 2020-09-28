@@ -1,7 +1,7 @@
 version: '3'
 services:
   bot:
-    image: "thenumeralone/vettingbot:latest-snapshot"
+    image: "thenumeralone/vettingbot:latest"
     env_file:
       - bot.env
     depends_on:
