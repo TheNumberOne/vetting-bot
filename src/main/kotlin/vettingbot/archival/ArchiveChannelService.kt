@@ -170,16 +170,18 @@ class ArchiveChannelService(
 
         val sortedMessages = archive.messages.sortedBy { it.time }
         val squishedMessages = mutableListOf<MessageArchive>()
-        var current = sortedMessages.first()
-        for (message in sortedMessages.drop(1)) {
-            if (current.author == message.author && current.content.length + message.content.length + 12 <= 2048) {
-                current = current.copy(content = current.content + "\n----------\n" + message.content)
-            } else {
-                squishedMessages += current
-                current = message
+        if (sortedMessages.isNotEmpty()) {
+            var current = sortedMessages.first()
+            for (message in sortedMessages.drop(1)) {
+                if (current.author == message.author && current.content.length + message.content.length + 12 <= 2048) {
+                    current = current.copy(content = current.content + "\n----------\n" + message.content)
+                } else {
+                    squishedMessages += current
+                    current = message
+                }
             }
+            squishedMessages += current
         }
-        squishedMessages += current
 
         for (messages in squishedMessages.windowed(10, 10, true)) {
             val usernames = messages.map { username(it.author) }
