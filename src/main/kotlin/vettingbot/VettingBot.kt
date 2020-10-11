@@ -68,5 +68,7 @@ private fun waitForHost(hostAndPort: String) {
     if (!foundPort) {
         println("Couldn't connect to $host within $maxTimeout ms.")
         exitProcess(1)
+    } else {
+        println("$host is up.")
     }
 }

@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
+import mu.KotlinLogging
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
@@ -44,6 +45,7 @@ import org.springframework.transaction.reactive.executeAndAwait
 import reactor.core.publisher.Mono
 import vettingbot.util.*
 
+private val logger = KotlinLogging.logger {}
 @Component
 class ArchiveChannelService(
     private val trans: TransactionalOperator,
@@ -140,7 +142,7 @@ class ArchiveChannelService(
         val previousOverwrites = channel.permissionOverwrites
         launch {
             val newOverwrites = mutableSetOf<PermissionOverwrite>()
-            previousOverwrites.mapTo(newOverwrites) { permissions ->
+            previousOverwrites.mapNotNullTo(newOverwrites) { permissions ->
                 when {
                     permissions.roleId.isPresent -> PermissionOverwrite.forRole(
                         permissions.roleId.get(),
@@ -153,7 +155,12 @@ class ArchiveChannelService(
                             permissions.allowed.andNot(PermissionSet.of(Permission.SEND_MESSAGES)),
                             permissions.allowed.or(PermissionSet.of(Permission.SEND_MESSAGES))
                         )
-                    else -> error("Either role id or member id should be present.")
+                    else -> {
+                        logger.error {
+                            "Permissions is missing roleId or memberId: { guildId=${permissions.guildId}, channelId=${permissions.channelId}, allowed=${permissions.allowed}, denied=${permissions.denied}, type=${permissions.type}, targetId=${permissions.targetId} }"
+                        }
+                        null
+                    }
                 }
             }
 

@@ -25,12 +25,16 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
 import vettingbot.configuration.BotConfigService
 import vettingbot.util.awaitCompletion
+import vettingbot.util.wrapExceptions
 
 @Component
 class GuildConfigService(private val repo: GuildConfigRepository, private val botConfig: BotConfigService) {
     suspend fun getGuildConfig(id: Snowflake): GuildConfig {
-        return repo.findById(id).awaitFirstOrNull()
-            ?: repo.save(GuildConfig(id, botConfig.getDefaultPrefix(), botConfig.getDefaultVettingText())).awaitSingle()
+        return wrapExceptions {
+            repo.findById(id).awaitFirstOrNull()
+        } ?: wrapExceptions {
+            repo.save(GuildConfig(id, botConfig.getDefaultPrefix(), botConfig.getDefaultVettingText())).awaitSingle()
+        }
     }
 
     suspend fun getPrefix(guildId: Snowflake): String {
@@ -38,7 +42,11 @@ class GuildConfigService(private val repo: GuildConfigRepository, private val bo
     }
 
     suspend fun setPrefix(guildId: Snowflake, prefix: String) {
-        getGuildConfig(guildId).copy(prefix = prefix).also { repo.save(it).awaitCompletion() }
+        getGuildConfig(guildId).copy(prefix = prefix).also {
+            wrapExceptions {
+                repo.save(it).awaitCompletion()
+            }
+        }
     }
 
     suspend fun getVettingText(guildId: Snowflake): String {
@@ -46,8 +54,11 @@ class GuildConfigService(private val repo: GuildConfigRepository, private val bo
     }
 
     suspend fun setVettingText(guildId: Snowflake, text: String) {
-        getGuildConfig(guildId).copy(vettingText = text)
-            .also { repo.save(it).awaitCompletion() }
+        getGuildConfig(guildId).copy(vettingText = text).also {
+            wrapExceptions {
+                repo.save(it).awaitCompletion()
+            }
+        }
     }
 
     suspend fun isEnabled(guildId: Snowflake): Boolean {
@@ -59,7 +70,9 @@ class GuildConfigService(private val repo: GuildConfigRepository, private val bo
         if (config.enabled == enabled) return
         val newConfig = config.copy(enabled = enabled)
         if (!enabled || canEnable(config)) {
-            repo.save(newConfig).awaitCompletion()
+            wrapExceptions {
+                repo.save(newConfig).awaitCompletion()
+            }
         } else {
             throw IllegalStateException("Can't enable the guild.")
         }
@@ -74,7 +87,11 @@ class GuildConfigService(private val repo: GuildConfigRepository, private val bo
     }
 
     suspend fun setVettingRole(guildId: Snowflake, roleId: Snowflake) {
-        return getGuildConfig(guildId).copy(vettingRole = roleId).let { repo.save(it).awaitCompletion() }
+        return getGuildConfig(guildId).copy(vettingRole = roleId).let {
+            wrapExceptions {
+                repo.save(it).awaitCompletion()
+            }
+        }
     }
 
     suspend fun getVettedRole(guildId: Snowflake): Snowflake? {
@@ -82,6 +99,10 @@ class GuildConfigService(private val repo: GuildConfigRepository, private val bo
     }
 
     suspend fun setVettedRole(guildId: Snowflake, roleId: Snowflake) {
-        return getGuildConfig(guildId).copy(vettedRole = roleId).let { repo.save(it).awaitCompletion() }
+        return getGuildConfig(guildId).copy(vettedRole = roleId).let {
+            wrapExceptions {
+                repo.save(it).awaitCompletion()
+            }
+        }
     }
 }

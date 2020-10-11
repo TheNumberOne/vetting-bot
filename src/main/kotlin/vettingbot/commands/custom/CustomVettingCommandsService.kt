@@ -28,6 +28,7 @@ import org.springframework.transaction.reactive.executeAndAwait
 import vettingbot.command.Command
 import vettingbot.guild.GuildConfigService
 import vettingbot.logging.GuildLoggerService
+import vettingbot.util.wrapExceptions
 import vettingbot.vetting.VettingChannelService
 
 @Component
@@ -39,14 +40,19 @@ class CustomVettingCommandsService(
     private val guildLoggerService: GuildLoggerService,
 ) {
     suspend fun findCommand(guildId: Snowflake, commandName: String): Command? {
-        return repo.findByGuildIdAndName(guildId, commandName.toLowerCase())
-            ?.let { CustomVettingCommand(guildConfigService, it, vettingChannelService, guildLoggerService) }
+        return wrapExceptions {
+            repo.findByGuildIdAndName(guildId, commandName.toLowerCase())
+        }?.let {
+            CustomVettingCommand(guildConfigService, it, vettingChannelService, guildLoggerService)
+        }
     }
 
     suspend fun findCommandConfigsInGuild(guildId: Snowflake): List<CustomVettingCommandConfig> {
-        return trans.executeAndAwait {
-            repo.findByGuildId(guildId)
-        }!!.toList()
+        return wrapExceptions {
+            trans.executeAndAwait {
+                repo.findByGuildId(guildId)
+            }!!
+        }.toList()
     }
 
     /**
@@ -55,9 +61,11 @@ class CustomVettingCommandsService(
      */
     suspend fun createNewOrSetExisting(
         config: CustomVettingCommandConfig
-    ): CustomVettingCommandConfig = trans.executeAndAwait {
-        repo.save(config.copy(name = config.name.toLowerCase())).awaitSingle()
-    }!!
+    ): CustomVettingCommandConfig = wrapExceptions {
+        trans.executeAndAwait {
+            repo.save(config.copy(name = config.name.toLowerCase())).awaitSingle()
+        }!!
+    }
 
     data class UpdateCommandResult(val previous: CustomVettingCommandConfig, val new: CustomVettingCommandConfig)
 
@@ -69,19 +77,23 @@ class CustomVettingCommandsService(
         guildId: Snowflake,
         commandName: String,
         update: (CustomVettingCommandConfig) -> CustomVettingCommandConfig
-    ): UpdateCommandResult? = trans.executeAndAwait {
-        val item = repo.findByGuildIdAndName(guildId, commandName.toLowerCase())
-        if (item != null) {
-            val newItem = update(item)
-            val result = repo.save(newItem.copy(name = newItem.name.toLowerCase())).awaitSingle()
-            UpdateCommandResult(item, result)
-        } else {
-            null
+    ): UpdateCommandResult? = wrapExceptions {
+        trans.executeAndAwait {
+            val item = repo.findByGuildIdAndName(guildId, commandName.toLowerCase())
+            if (item != null) {
+                val newItem = update(item)
+                val result = repo.save(newItem.copy(name = newItem.name.toLowerCase())).awaitSingle()
+                UpdateCommandResult(item, result)
+            } else {
+                null
+            }
         }
     }
 
-    suspend fun delete(guildId: Snowflake, commandName: String) = trans.executeAndAwait {
-        repo.deleteByGuildIdAndName(guildId, commandName.toLowerCase())
+    suspend fun delete(guildId: Snowflake, commandName: String) = wrapExceptions {
+        trans.executeAndAwait {
+            repo.deleteByGuildIdAndName(guildId, commandName.toLowerCase())
+        }
     }
 
 }

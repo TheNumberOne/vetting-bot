@@ -541,7 +541,9 @@ class CommandCommand(
                 }
                 previousAllow -> {
                     val snowflake = findAndParseSnowflake(part)
-                    if (snowflake == guild.id || snowflake in guild.roleIds) {
+                    if (snowflake == null && part == "@everyone") {
+                        config.allowedRoles += guild.id
+                    } else if (snowflake == guild.id || snowflake in guild.roleIds) {
                         config.allowedRoles += snowflake!!
                     } else if (snowflake != null) {
                         config.allowedUsers += snowflake
@@ -549,7 +551,9 @@ class CommandCommand(
                 }
                 previousForbid -> {
                     val snowflake = findAndParseSnowflake(part)
-                    if (snowflake == guild.id || snowflake in guild.roleIds) {
+                    if (snowflake == null && part == "@everyone") {
+                        config.forbiddenRoles += guild.id
+                    } else if (snowflake == guild.id || snowflake in guild.roleIds) {
                         config.forbiddenRoles += snowflake!!
                     } else if (snowflake != null) {
                         config.forbiddenUsers += snowflake
