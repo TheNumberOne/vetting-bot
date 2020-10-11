@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "vettingbot"
-version = "1.0.1"
+version = "1.0.2-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 configurations {
