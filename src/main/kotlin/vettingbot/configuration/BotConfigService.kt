@@ -22,12 +22,23 @@ package vettingbot.configuration
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.stereotype.Component
+import org.springframework.transaction.reactive.TransactionalOperator
+import org.springframework.transaction.reactive.executeAndAwait
+import vettingbot.util.wrapExceptions
 
 @Component
-class BotConfigService(private val defaultBotConfig: BotConfig, private val repository: BotConfigRepository) {
+class BotConfigService(
+    private val defaultBotConfig: BotConfig,
+    private val repository: BotConfigRepository,
+    private val trans: TransactionalOperator
+) {
     private suspend fun getConfig(): BotConfig {
-        return repository.findById(BotConfig.INSTANCE_ID).awaitFirstOrNull()
-                ?: repository.save(defaultBotConfig).awaitSingle()
+        return wrapExceptions {
+            trans.executeAndAwait {
+                repository.findById(BotConfig.INSTANCE_ID).awaitFirstOrNull() ?: repository.save(defaultBotConfig)
+                    .awaitSingle()
+            }!!
+        }
     }
 
     suspend fun getDefaultPrefix(): String {
