@@ -21,8 +21,8 @@ package vettingbot.neo4j
 
 import org.liquigraph.core.api.Liquigraph
 import org.liquigraph.core.configuration.ConfigurationBuilder
-import org.neo4j.driver.springframework.boot.autoconfigure.Neo4jDriverProperties
 import org.springframework.boot.CommandLineRunner
+import org.springframework.boot.autoconfigure.neo4j.Neo4jProperties
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
@@ -30,15 +30,15 @@ import org.springframework.stereotype.Component
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-class MigrationRunner(private val neo4JProperties: Neo4jDriverProperties) : CommandLineRunner {
+class MigrationRunner(private val neo4JProperties: Neo4jProperties) : CommandLineRunner {
     override fun run(vararg args: String?) {
         val configuration = ConfigurationBuilder()
-                .withMasterChangelogLocation("db/liquigraph/changelog.xml")
-                .withUri("jdbc:neo4j:" + neo4JProperties.uri.toString())
-                .withUsername(neo4JProperties.authentication.username)
-                .withPassword(neo4JProperties.authentication.password)
-                .withRunMode()
-                .build()
+            .withMasterChangelogLocation("db/liquigraph/changelog.xml")
+            .withUri("jdbc:neo4j:" + neo4JProperties.uri.toString())
+            .withUsername(neo4JProperties.authentication.username)
+            .withPassword(neo4JProperties.authentication.password)
+            .withRunMode()
+            .build()
 
         Liquigraph().runMigrations(configuration)
     }

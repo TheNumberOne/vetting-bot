@@ -21,10 +21,10 @@ package vettingbot.vetting
 
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.channel.Category
-import org.neo4j.springframework.data.core.schema.Id
-import org.neo4j.springframework.data.core.schema.Node
-import org.neo4j.springframework.data.core.schema.Relationship
+import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceConstructor
+import org.springframework.data.neo4j.core.schema.Node
+import org.springframework.data.neo4j.core.schema.Relationship
 
 @Node
 data class CategoryData @PersistenceConstructor constructor(

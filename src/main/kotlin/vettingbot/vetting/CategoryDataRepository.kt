@@ -20,7 +20,7 @@
 package vettingbot.vetting
 
 import discord4j.common.util.Snowflake
-import org.neo4j.springframework.data.repository.query.Query
+import org.springframework.data.neo4j.repository.query.Query
 import org.springframework.data.repository.reactive.ReactiveCrudRepository
 import reactor.core.publisher.Flux
 

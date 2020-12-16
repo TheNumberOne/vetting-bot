@@ -21,10 +21,11 @@ package vettingbot.commands.custom
 
 import discord4j.common.util.Snowflake
 import kotlinx.coroutines.flow.Flow
-import org.neo4j.springframework.data.repository.query.Query
+import org.springframework.data.neo4j.repository.query.Query
 import org.springframework.data.repository.reactive.ReactiveCrudRepository
 
 interface CustomVettingCommandConfigRepository : ReactiveCrudRepository<CustomVettingCommandConfig, Long> {
+    @Suppress("SpringDataRepositoryMethodParametersInspection")
     suspend fun findByGuildIdAndName(guildId: Snowflake, name: String): CustomVettingCommandConfig?
     fun findByGuildId(guildId: Snowflake): Flow<CustomVettingCommandConfig>
 

@@ -19,10 +19,10 @@
 
 package vettingbot.configuration
 
-import org.neo4j.springframework.data.core.schema.Node
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.ConstructorBinding
 import org.springframework.data.annotation.Id
+import org.springframework.data.neo4j.core.schema.Node
 
 @ConstructorBinding
 @ConfigurationProperties(prefix = "bot")

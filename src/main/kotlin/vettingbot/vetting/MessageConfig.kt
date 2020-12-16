@@ -21,8 +21,8 @@ package vettingbot.vetting
 
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.reaction.ReactionEmoji
-import org.neo4j.springframework.data.core.schema.Id
-import org.neo4j.springframework.data.core.schema.Node
+import org.springframework.data.annotation.Id
+import org.springframework.data.neo4j.core.schema.Node
 import vettingbot.util.nullable
 
 @Node

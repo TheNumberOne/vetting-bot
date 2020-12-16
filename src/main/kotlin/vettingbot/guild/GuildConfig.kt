@@ -20,8 +20,8 @@
 package vettingbot.guild
 
 import discord4j.common.util.Snowflake
-import org.neo4j.springframework.data.core.schema.Id
-import org.neo4j.springframework.data.core.schema.Node
+import org.springframework.data.annotation.Id
+import org.springframework.data.neo4j.core.schema.Node
 
 @Node
 data class GuildConfig(

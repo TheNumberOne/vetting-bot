@@ -50,9 +50,9 @@ class CustomVettingCommandsService(
     suspend fun findCommandConfigsInGuild(guildId: Snowflake): List<CustomVettingCommandConfig> {
         return wrapExceptions {
             trans.executeAndAwait {
-                repo.findByGuildId(guildId)
+                repo.findByGuildId(guildId).toList()
             }!!
-        }.toList()
+        }
     }
 
     /**

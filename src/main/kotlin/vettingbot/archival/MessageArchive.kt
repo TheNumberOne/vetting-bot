@@ -20,8 +20,8 @@
 package vettingbot.archival
 
 import discord4j.common.util.Snowflake
-import org.neo4j.springframework.data.core.schema.GeneratedValue
-import org.neo4j.springframework.data.core.schema.Id
+import org.springframework.data.annotation.Id
+import org.springframework.data.neo4j.core.schema.GeneratedValue
 import java.time.Instant
 
 data class MessageArchive(
