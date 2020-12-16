@@ -149,7 +149,8 @@ class VettingChannelService(
                             )
                         ) + modRoles.map { roleId ->
                             PermissionOverwrite.forRole(roleId, PermissionSet.all(), PermissionSet.none())
-                        }
+                        } + PermissionOverwrite.forRole(member.guildId, PermissionSet.none(), PermissionSet.all())
+                                + category.permissionOverwrites
                     )
                 }
             }.awaitSingle()
