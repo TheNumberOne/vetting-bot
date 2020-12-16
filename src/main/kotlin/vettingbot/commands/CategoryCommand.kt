@@ -36,6 +36,8 @@ import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.whenComplete
 import vettingbot.command.AbstractCommand
+import vettingbot.discord.ChannelInteraction
+import vettingbot.discord.interactionFor
 import vettingbot.util.*
 import vettingbot.vetting.VettingChannelService
 
@@ -76,7 +78,15 @@ class CategoryCommand(private val vettingChannelService: VettingChannelService) 
                 )
             }
         } else {
-            createOrRenameCategories(guild, categories, args, message.message.channel.awaitSingle() as TextChannel)
+            val interaction =
+                interactionFor(message.message.channel.awaitSingle(), message.message.author.nullable ?: return)
+            createOrRenameCategories(
+                guild,
+                categories,
+                args,
+                message.message.channel.awaitSingle() as TextChannel,
+                interaction
+            )
         }
     }
 
@@ -84,7 +94,8 @@ class CategoryCommand(private val vettingChannelService: VettingChannelService) 
         guild: Guild,
         currentCategories: List<Category>,
         name: String,
-        respondChannel: TextChannel
+        respondChannel: TextChannel,
+        interaction: ChannelInteraction
     ) {
         val oldCategories = currentCategories.toList()
         oldCategories.map { category ->
@@ -107,10 +118,7 @@ class CategoryCommand(private val vettingChannelService: VettingChannelService) 
             if (existingCategories.isEmpty()) {
                 val newCategory = vettingChannelService.createVettingCategory(guild, name)
 
-                respondChannel.sendEmbed {
-                    title("Categories")
-                    description("Created category ${newCategory.mention}.")
-                }
+                interaction.send("Created category ${newCategory.mention}.", title = "Categories")
             } else {
                 existingCategories.forEach {
                     vettingChannelService.saveVettingCategory(it)

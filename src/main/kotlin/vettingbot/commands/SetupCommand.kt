@@ -47,6 +47,9 @@ import vettingbot.banwatch.BanWatchService
 import vettingbot.command.AbstractCommand
 import vettingbot.commands.custom.CustomVettingCommandConfig
 import vettingbot.commands.custom.CustomVettingCommandsService
+import vettingbot.discord.ChannelInteraction
+import vettingbot.discord.interactionFor
+import vettingbot.discord.promptBoolean
 import vettingbot.guild.GuildConfigService
 import vettingbot.logging.GuildLoggerService
 import vettingbot.mod.ModService
@@ -59,6 +62,7 @@ import vettingbot.vetting.vetMessageTemplate
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeoutException
+import kotlin.time.ExperimentalTime
 
 private val logger = KotlinLogging.logger {}
 
@@ -76,12 +80,14 @@ class SetupCommand(
 ) : AbstractCommand("setup", "Interactively configures the bot for this server.", Permission.ADMINISTRATOR) {
     private val runningSetups = ConcurrentHashMap<Snowflake, Job>()
 
+    @ExperimentalTime
     override suspend fun run(message: MessageCreateEvent, args: String) = coroutineScope {
         val guildId = message.guildId.nullable ?: return@coroutineScope
         val guild = message.guild.awaitSingle()
         val channel = message.message.channel.awaitSingle() as TextChannel
         val client = message.message.client
         val member = message.member.nullable ?: return@coroutineScope
+        val interaction = interactionFor(channel, member)
         val messages = client.on(MessageCreateEvent::class.java)
             .filter {
                 it.guildId.nullable == guildId
@@ -105,7 +111,13 @@ class SetupCommand(
 
             jobs += launch {
                 try {
-                    doSetup(guild, member.id, channel, messages.timeout(Duration.ofMinutes(5)).filter { it != "exit" })
+                    doSetup(
+                        guild,
+                        member.id,
+                        channel,
+                        messages.timeout(Duration.ofMinutes(5)).filter { it != "exit" },
+                        interaction
+                    )
                 } catch (t: TimeoutException) {
                     message.respondEmbed {
                         description("Timed out.")
@@ -125,99 +137,87 @@ class SetupCommand(
         guild: Guild,
         userId: Snowflake,
         channel: TextChannel,
-        messages: Flux<String>
+        messages: Flux<String>,
+        interaction: ChannelInteraction
     ) {
         val nextMessage = messages.next()
         val self = guild.selfMember.awaitSingle()
 
-        channel.sendEmbed {
-            title("Setup")
-            description("Welcome to the automatic setup of vetting bot. Type `exit` to exit setup immediately. The setup will exit if the total time passes an hour or if you take longer than 5 minutes to answer a prompt.")
-        }
+        interaction.send(
+            "Welcome to the automatic setup of vetting bot. Type `exit` to exit setup immediately. The setup will exit if the total time passes an hour or if you take longer than 5 minutes to answer a prompt.",
+            title = "Setup"
+        )
 
         // 1. vetting role
         //   a. If already exists, ask if you want to change it to a different role.
-        setupVettingRole(guild, userId, channel, nextMessage)
+        setupVettingRole(guild, interaction)
 
         // 2. vetted role
-        setupVettedRole(guild, userId, channel, nextMessage)
+        setupVettedRole(guild, interaction)
 
         // 3. Offer to forbid all permissions to @everyone
-        checkHasLimitedPermissions(userId, channel, guild.everyoneRole.awaitSingle())
+        checkHasLimitedPermissions(guild.everyoneRole.awaitSingle(), interaction)
 
         // 4. vetting category
         //   a. If already exists, ask if you want to change the name.
         //   b. Otherwise, ask for the new name of the category.
         val categories = vettingChannelService.getVettingCategories(guild)
         if (categories.isEmpty()) {
-            channel.sendEmbed {
-                title("Vetting Category")
-                description(
-                    """
-                    There is currently no category configured for vetting channels to be created under.
-                    Do one of the following:
-                    1. Type out the id of a category to set it as the category.
-                    2. Type out the name of a category to set it as the category.
-                    3. Type out the name of a category which will be created.
-                    """.trimIndent()
-                )
-            }
-            val category = nextMessage.awaitFirst()
-            categoryCommand.createOrRenameCategories(guild, categories, category, channel)
+            interaction.send(
+                """
+                There is currently no category configured for vetting channels to be created under.
+                Do one of the following:
+                1. Type out the id of a category to set it as the category.
+                2. Type out the name of a category to set it as the category.
+                3. Type out the name of a category which will be created.
+                """.trimIndent(),
+                title = "Vetting Category"
+            )
+            val category = interaction.read()
+            categoryCommand.createOrRenameCategories(guild, categories, category, channel, interaction)
         } else {
-            val isFine = channel.sendEmbed {
-                title("Vetting Category")
-                description(
-                    if (categories.size == 1) {
-                        "Category `${categories.first().name}` is configured for vetting channels to be created under.\n"
-                    } else {
-                        "${categories.size} categories are configured for vetting channels to be created under.\n"
-                    } + "React with ✅ below if this is fine, or \uD83D\uDEAB to rename the categories."
-                )
-            }.promptBoolean(userId)
+            val isFine = interaction.promptBoolean(
+                if (categories.size == 1) {
+                    "Category `${categories.first().name}` is configured for vetting channels to be created under.\n"
+                } else {
+                    "${categories.size} categories are configured for vetting channels to be created under.\n"
+                } + "React with ✅ below if this is fine, or \uD83D\uDEAB to rename the categories.",
+                title = "Vetting Category"
+            )
             if (!isFine) {
-                channel.sendEmbed {
-                    title("Vetting Category")
-                    description("Type out the name you wish to rename the categories to.")
-                }
-                categoryCommand.createOrRenameCategories(guild, categories, nextMessage.awaitFirst(), channel)
+                interaction.send("Type out the name you wish to rename the categories to.", title = "Vetting Category")
+                categoryCommand.createOrRenameCategories(guild, categories, interaction.read(), channel, interaction)
             }
         }
         // moderators
         val modRoles = modService.getModRoles(guild.id)
         if (modRoles.isEmpty()) {
-            channel.sendEmbed {
-                title("Moderator Roles")
-                description("There are currently no moderators roles that can access the vetting channels by default. Please mention or type out the ids of roles that can access the vetting channels.")
-            }
-            val rolesIds = findAndParseAllSnowflakes(nextMessage.awaitFirst())
+            interaction.send(
+                "There are currently no moderators roles that can access the vetting channels by default. Please mention or type out the ids of roles that can access the vetting channels.",
+                title = "Moderator Roles"
+            )
+            val rolesIds = findAndParseAllSnowflakes(interaction.read())
             if (rolesIds.isEmpty()) {
-                channel.sendEmbed {
-                    title("Moderator Roles")
-                    description("No roles were specified. Continuing.")
-                }
+                interaction.send("No roles were specified. Continuing.", title = "Moderator Roles")
             } else {
                 val roles = Flux.merge(rolesIds.map { id ->
                     guild.getRoleById(id)
                 }).onDiscordNotFound {
                     mono {
-                        channel.sendEmbed {
-                            title("Moderator Roles")
-                            description("There was an invalid role specified. Continuing.")
-                        }
+                        interaction.send("There was an invalid role specified. Continuing.", title = "Moderator Roles")
                         null
                     }
                 }.collectList().awaitSingle()
                 if (roles.size == rolesIds.size) {
                     modService.addModRoles(guild.id, rolesIds)
-                    channel.sendEmbed {
-                        title("Moderator Roles")
-                        description("The following roles were added as moderator roles: " + rolesIds.joinToString(", ") {
+                    interaction.send(
+                        "The following roles were added as moderator roles: " + rolesIds.joinToString(", ") {
                             it.roleMention(
                                 guild.id
                             )
-                        })
-                    }
+                        },
+                        title = "Moderator Roles"
+                    )
                 }
             }
         }
@@ -226,12 +226,12 @@ class SetupCommand(
         val commandRolesNotModRoles =
             commandRoles - modRoles - guild.id - setOfNotNull(guildConfigService.getVettingRole(guild.id))
         if (commandRolesNotModRoles.isNotEmpty()) {
-            val addAsMods = channel.sendEmbed {
-                title("Moderator Roles")
-                description("The following roles can run vetting commands, but cannot access vetting commands by default: "
+            val addAsMods = interaction.promptBoolean(
+                "The following roles can run vetting commands, but cannot access vetting commands by default: "
                         + commandRolesNotModRoles.joinToString(", ") { it.roleMention(guild.id) }
-                        + ".\nDo you wish for these roles to be added as moderators?")
-            }.promptBoolean(userId)
+                        + ".\nDo you wish for these roles to be added as moderators?",
+                title = "Moderator Roles"
+            )
             if (addAsMods) {
                 modService.addModRoles(guild.id, commandRoles)
             }
@@ -242,10 +242,10 @@ class SetupCommand(
         //   a. Do you wish to create the custom commands vet, ban, and kick?
         val commandNames = commands.map { it.name }
         if ("vet" !in commandNames) {
-            val addVettingCommand = channel.sendEmbed {
-                title("Custom Commands")
-                description("Do you wish to automatically create the vetting command `v!vet` which will complete the vetting process?")
-            }.promptBoolean(userId)
+            val addVettingCommand = interaction.promptBoolean(
+                "Do you wish to automatically create the vetting command `v!vet` which will complete the vetting process?",
+                "Custom Commands"
+            )
             if (addVettingCommand) {
                 customVettingCommandsService.createNewOrSetExisting(
                     CustomVettingCommandConfig(
@@ -256,17 +256,14 @@ class SetupCommand(
                         allowedRoles = actualModRoles.toList()
                     )
                 )
-                channel.sendEmbed {
-                    title("Custom Commands")
-                    description("Created command `v!vet`.")
-                }
+                interaction.send("Created command `v!vet`.", title = "Custom Commands")
             }
         }
         if ("ban" !in commandNames) {
-            val addBanCommand = channel.sendEmbed {
-                title("Custom Commands")
-                description("Do you wish to automatically create the vetting command `v!ban` which will ban members who fail the verification process?")
-            }.promptBoolean(userId)
+            val addBanCommand = interaction.promptBoolean(
+                "Do you wish to automatically create the vetting command `v!ban` which will ban members who fail the verification process?",
+                title = "Custom Commands"
+            )
             if (addBanCommand) {
                 customVettingCommandsService.createNewOrSetExisting(
                     CustomVettingCommandConfig(
@@ -276,17 +273,15 @@ class SetupCommand(
                         allowedRoles = actualModRoles.toList()
                     )
                 )
-                channel.sendEmbed {
-                    title("Custom Commands")
-                    description("Created command `v!ban`.")
-                }
+                interaction.send("Created command `v!ban`.", title = "Custom Commands")
             }
         }
         if ("kick" !in commandNames) {
-            val addKickCommand = channel.sendEmbed {
-                title("Custom Commands")
-                description("Do you wish to automatically create the vetting command `v!kick` which will kick members who fail the verification process?")
-            }.promptBoolean(userId)
+            val addKickCommand = interaction.promptBoolean(
+                "Do you wish to automatically create the vetting command `v!kick` which will kick members who fail the verification process?",
+                "Custom Commands"
+            )
+
             if (addKickCommand) {
                 customVettingCommandsService.createNewOrSetExisting(
                     CustomVettingCommandConfig(
@@ -296,40 +291,32 @@ class SetupCommand(
                         allowedRoles = actualModRoles.toList()
                     )
                 )
-                channel.sendEmbed {
-                    title("Custom Commands")
-                    description("Created command `v!kick`.")
-                }
+                interaction.send("Created command `v!kick`.", title = "Custom Commands")
             }
         }
         val cantBeExecuted = commands.filter { it.allowedUsers.isEmpty() && it.allowedRoles.isEmpty() }
         if (cantBeExecuted.isNotEmpty()) {
-            val fix = channel.sendEmbed {
-                title("Custom Commands")
-                description(
-                    "The following custom commands cannot be executed by anyone: ${cantBeExecuted.joinToString(", ") { it.name }}\n" +
-                            "Do you wish to fix this by allowing all moderators to execute them?"
-                )
-            }.promptBoolean(userId)
+            val fix = interaction.promptBoolean(
+                "The following custom commands cannot be executed by anyone: ${cantBeExecuted.joinToString(", ") { it.name }}\n" +
+                        "Do you wish to fix this by allowing all moderators to execute them?",
+                title = "Custom Commands"
+            )
             if (fix) {
                 for (command in cantBeExecuted) {
                     customVettingCommandsService.updateCommand(guild.id, command.name) {
                         it.copy(allowedRoles = it.allowedRoles + actualModRoles)
                     }
                 }
-                channel.sendEmbed {
-                    title("Custom Commands")
-                    description("Moderators can now execute the commands.")
-                }
+                interaction.send("Moderators can now execute the commands.", title = "Custom Commands")
             }
         }
         // 6. vetting message
         val vettingMessages = messageService.getVettingMessagesInGuild(guild)
         if (vettingMessages.isEmpty()) {
-            val createMessage = channel.sendEmbed {
-                title("Welcome Message")
-                description("To start the vetting process, each user needs to react to a welcome message created by this bot. There are currently no such messages configured for this server. Do you wish to create one?")
-            }.promptBoolean(userId)
+            val createMessage = interaction.promptBoolean(
+                "To start the vetting process, each user needs to react to a welcome message created by this bot. There are currently no such messages configured for this server. Do you wish to create one?",
+                title = "Welcome Message"
+            )
             if (createMessage) {
                 val messageChannel =
                     promptWelcomeMessageChannel(guild, channel, userId, self, nextMessage, actualModRoles)
@@ -639,46 +626,38 @@ class SetupCommand(
 
     private suspend fun setupVettedRole(
         guild: Guild,
-        userId: Snowflake,
-        channel: TextChannel,
-        nextMessage: Mono<String>
+        interaction: ChannelInteraction
     ) {
         val previousVettedRole = guildConfigService.getVettedRole(guild.id)
         if (previousVettedRole == null) {
-            channel.sendEmbed {
-                title("Vetted Role")
-                description(
-                    """
-                    The role that is assigned to members after they are vetted has not been specified.
-                    Please either
-                    1. Mention an existing role to use as this role.
-                    or 2. Type out the name of a new role to use as this role.
-                    """.trimIndent()
-                )
-            }
-            guildConfigService.setVettedRole(guild.id, readRole(guild, channel, nextMessage).id)
+            interaction.send(
+                """
+                The role that is assigned to members after they are vetted has not been specified.
+                Please either
+                1. Mention an existing role to use as this role.
+                or 2. Type out the name of a new role to use as this role.
+                """.trimIndent(),
+                title = "Vetted Role"
+            )
+            guildConfigService.setVettedRole(guild.id, readRole(guild, interaction).id)
         } else {
-            val isFine = channel.sendEmbed {
-                title("Vetted Role")
-                description(
-                    """
-                    The role ${previousVettedRole.roleMention(guild.id)} is assigned to members after they are vetted.
-                    Please react to ✅ below if this is fine, or 🚫 if you want to change it.
-                    """.trimIndent()
-                )
-            }.promptBoolean(userId)
+            val isFine = interaction.promptBoolean(
+                """
+                The role ${previousVettedRole.roleMention(guild.id)} is assigned to members after they are vetted.
+                Please react to ✅ below if this is fine, or 🚫 if you want to change it.
+                """.trimIndent(),
+                title = "Vetted Role"
+            )
 
             if (!isFine) {
-                channel.sendEmbed {
-                    title("Vetted Role")
-                    description(
-                        """
-                        1. Mention an existing role to use as this role.
-                        or 2. Type out the name of a new role to use as this role.
-                        """.trimIndent()
-                    )
-                }
-                guildConfigService.setVettedRole(guild.id, readRole(guild, channel, nextMessage).id)
+                interaction.send(
+                    """
+                    1. Mention an existing role to use as this role.
+                    or 2. Type out the name of a new role to use as this role.
+                    """.trimIndent(),
+                    title = "Vetted Role"
+                )
+                guildConfigService.setVettedRole(guild.id, readRole(guild, interaction).id)
             }
         }
         val role = guild.getRoleById(guildConfigService.getVettedRole(guild.id)!!).awaitSingle()
@@ -688,14 +667,12 @@ class SetupCommand(
             Permission.READ_MESSAGE_HISTORY
         ) - role.permissions
         if (permissions.isNotEmpty()) {
-            val fix = channel.sendEmbed {
-                description(
-                    """
-                    Role ${role.id.roleMention(role.guildId)} can't see or send messages by default because of its permissions.
-                    React with ✅ to fix, or 🚫 to not fix.
-                    """.trimIndent()
-                )
-            }.promptBoolean(userId)
+            val fix = interaction.promptBoolean(
+                """
+                Role ${role.id.roleMention(role.guildId)} can't see or send messages by default because of its permissions.
+                React with ✅ to fix, or 🚫 to not fix.
+                """.trimIndent()
+            )
             if (fix) {
                 role.edit {
                     it.setPermissions(PermissionSet.of(*(role.permissions + permissions).toTypedArray()))
@@ -706,71 +683,60 @@ class SetupCommand(
 
     private suspend fun setupVettingRole(
         guild: Guild,
-        userId: Snowflake,
-        channel: TextChannel,
-        nextMessage: Mono<String>
+        interaction: ChannelInteraction
     ) {
         val previousVettingRole = guildConfigService.getVettingRole(guild.id)
         if (previousVettingRole == null) {
-            channel.sendEmbed {
-                title("Vetting Role")
-                description(
-                    """
+            interaction.send(
+                """
                     The role that is assigned to members while they are being vetted has not been specified.
                     Please either
                     1. Mention an existing role to use as this role.
                     or 2. Type out the name of a new role to use as this role.
-                    """.trimIndent()
-                )
-            }
-            guildConfigService.setVettingRole(guild.id, readRole(guild, channel, nextMessage).id)
+                    """.trimIndent(),
+                "Vetting Role"
+            )
+            guildConfigService.setVettingRole(guild.id, readRole(guild, interaction).id)
         } else {
-            val isFine = channel.sendEmbed {
-                title("Vetting Role")
-                description(
-                    """
-                    The role ${previousVettingRole.roleMention(guild.id)} is assigned to members while they are being vetted.
-                    Please react to ✅ below if this is fine, or 🚫 if you want to change it.
-                    """.trimIndent()
-                )
-            }.promptBoolean(userId)
+            val isFine = interaction.promptBoolean(
+                """
+                The role ${previousVettingRole.roleMention(guild.id)} is assigned to members while they are being vetted.
+                Please react to ✅ below if this is fine, or 🚫 if you want to change it.
+                """.trimIndent(),
+                title = "Vetting Role"
+            )
 
             logger.debug("User chose to keep vetting role or not.", isFine)
 
             if (!isFine) {
-                channel.sendEmbed {
-                    title("Vetting Role")
-                    description(
-                        """
-                        1. Mention an existing role to use as this role.
-                        or 2. Type out the name of a new role to use as this role.
-                        """.trimIndent()
-                    )
-                }
-                guildConfigService.setVettingRole(guild.id, readRole(guild, channel, nextMessage).id)
+                interaction.send(
+                    """
+                    1. Mention an existing role to use as this role.
+                    or 2. Type out the name of a new role to use as this role.
+                    """.trimIndent(),
+                    title = "Vetting Role"
+                )
+                guildConfigService.setVettingRole(guild.id, readRole(guild, interaction).id)
             }
         }
         val role = guild.getRoleById(guildConfigService.getVettingRole(guild.id)!!).awaitSingle()
-        checkHasLimitedPermissions(userId, channel, role)
+        checkHasLimitedPermissions(role, interaction)
     }
 
     private suspend fun checkHasLimitedPermissions(
-        userId: Snowflake,
-        channel: TextChannel,
-        role: Role
+        role: Role,
+        interaction: ChannelInteraction
     ) {
         val permissions = role.permissions intersect PermissionSet.of(
             Permission.VIEW_CHANNEL,
         )
         if (permissions.isNotEmpty()) {
-            val fix = channel.sendEmbed {
-                description(
-                    """
-                    Role ${role.id.roleMention(role.guildId)} can see or send messages by default.
-                    React with ✅ to fix, or 🚫 to not fix.
-                    """.trimIndent()
-                )
-            }.promptBoolean(userId)
+            val fix = interaction.promptBoolean(
+                """
+                Role ${role.id.roleMention(role.guildId)} can see or send messages by default.
+                React with ✅ to fix, or 🚫 to not fix.
+                """.trimIndent()
+            )
             if (fix) {
                 role.edit {
                     it.setPermissions(PermissionSet.of(*(role.permissions - permissions).toTypedArray()))
@@ -781,24 +747,19 @@ class SetupCommand(
 
     private suspend fun readRole(
         guild: Guild,
-        channel: TextChannel,
-        nextMessage: Mono<String>
+        interaction: ChannelInteraction
     ): Role {
-        val response = nextMessage.awaitFirst()
+        val response = interaction.read()
         val existingRole = findAndParseSnowflake(response)
             ?.let { guild.getRoleById(it).onDiscordNotFound { Mono.empty() }.awaitFirstOrNull() }
         return if (existingRole == null) {
             val createdRole = guild.createRole {
                 it.setName(response)
             }.awaitSingle()
-            channel.sendEmbed {
-                description("Created role ${createdRole.mention}")
-            }
+            interaction.send("Created role ${createdRole.mention}")
             createdRole
         } else {
-            channel.sendEmbed {
-                description("Using role ${existingRole.id.roleMention(existingRole.guildId)}")
-            }
+            interaction.send("Using role ${existingRole.id.roleMention(existingRole.guildId)}")
             existingRole
         }
     }

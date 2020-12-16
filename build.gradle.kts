@@ -74,7 +74,12 @@ tasks.withType<Test> {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict", "-Xinline-classes", "-Xopt-in=kotlin.ExperimentalUnsignedTypes")
+        freeCompilerArgs = listOf(
+            "-Xjsr305=strict",
+            "-Xinline-classes",
+            "-Xopt-in=kotlin.ExperimentalUnsignedTypes",
+            "-Xopt-in=kotlin.RequiresOptIn"
+        )
         jvmTarget = "11"
         languageVersion = "1.4"
     }
