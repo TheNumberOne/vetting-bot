@@ -20,12 +20,12 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.4.0-M3"
+    id("org.springframework.boot") version "2.4.1"
     id("io.spring.dependency-management") version "1.0.10.RELEASE"
-    id("com.github.ben-manes.versions") version "0.33.0"
+    id("com.github.ben-manes.versions") version "0.36.0"
     kotlin("jvm") version "1.4.10"
     kotlin("plugin.spring") version "1.4.10"
-    id("com.google.cloud.tools.jib") version "2.5.0"
+    id("com.google.cloud.tools.jib") version "2.7.0"
 }
 
 group = "vettingbot"
@@ -53,7 +53,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
     implementation("net.bytebuddy:byte-buddy-agent")
     implementation("org.neo4j.springframework.data:spring-data-neo4j-rx-spring-boot-starter:1.1.1")
-    implementation("io.github.microutils:kotlin-logging:2.0.3")
+    implementation("io.github.microutils:kotlin-logging:2.0.4")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -63,7 +63,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
-    testImplementation("io.kotest:kotest-runner-junit5:4.2.5") // for kotest framework
+    testImplementation("io.kotest:kotest-runner-junit5:4.3.2") // for kotest framework
     testImplementation("io.kotest:kotest-assertions-core:4.2.5") // for kotest core jvm assertions
     testImplementation("io.kotest:kotest-property:4.2.5") // for kotest property test
 }
