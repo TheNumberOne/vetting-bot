@@ -39,6 +39,8 @@ import vettingbot.guild.GuildConfigService
 import vettingbot.template.showValidation
 import vettingbot.util.*
 
+const val MAX_EMBED_FIELD_LENGTH = 1024
+
 @Component
 class CommandCommand(
     private val guildService: GuildConfigService,
@@ -85,14 +87,39 @@ class CommandCommand(
         message.respondEmbed {
             title("Custom Commands")
             for (command in commands) {
-                field(
-                    "$prefix${command.name}", getCommandDescription(command)
-                )
+                displayCommandDescription(prefix, command)
             }
         }
     }
 
-    private fun getCommandDescription(command: CustomVettingCommandConfig): String {
+    private fun EmbedCreateSpecDsl.displayCommandDescription(prefix: String, command: CustomVettingCommandConfig) {
+        val descriptionParts = getCommandDescription(command)
+
+        field("$prefix${command.name}", descriptionParts[0])
+        for (part in descriptionParts.slice(1..descriptionParts.lastIndex)) {
+            field("— (continued)", part)
+        }
+    }
+
+    private fun combineLines(lines: List<String>, maxCombineSize: Int): List<String> {
+        val combined = mutableListOf<String>()
+        val current = StringBuilder()
+        for (line in lines) {
+            if (current.length + 1 + line.length <= maxCombineSize) {
+                current.append('\n').append(line)
+            } else {
+                combined += current.toString()
+                current.clear()
+                current.append(line)
+            }
+        }
+        if (current.isNotEmpty()) {
+            combined += current.toString()
+        }
+        return combined
+    }
+
+    private fun getCommandDescription(command: CustomVettingCommandConfig): List<String> {
         val lines = mutableListOf<String>()
 
         if (command.ban) {
@@ -111,7 +138,7 @@ class CommandCommand(
             }
         }
         if (command.ping) {
-            lines += "Pings in ${command.pingChannel!!.channelMention()}: ${command.pingMessage}"
+            lines += "Pings in ${command.pingChannel!!.channelMention()}: ${command.pingMessage}".lines()
         }
         if (command.forbiddenUsers.isNotEmpty()) {
             lines += "Forbidden users: " + command.forbiddenUsers.joinToString { it.memberMention() }
@@ -128,7 +155,7 @@ class CommandCommand(
         if (command.allowedRoles.isEmpty() && command.allowedUsers.isEmpty()) {
             lines += "**Warning:** Nobody can execute the command."
         }
-        return lines.joinToString("\n")
+        return combineLines(lines, MAX_EMBED_FIELD_LENGTH)
     }
 
 
@@ -198,7 +225,11 @@ class CommandCommand(
             val prefix = guildService.getPrefix(guild.id)
             message.respondEmbed {
                 title("Add Command")
-                description("Added new command `$prefix${newCommand.name}`\n\n" + getCommandDescription(result))
+                description(
+                    "Added new command `$prefix${newCommand.name}`\n\n" + getCommandDescription(result).joinToString(
+                        "\n"
+                    )
+                )
             }
         }
     }
@@ -288,16 +319,10 @@ class CommandCommand(
                     description("Command doesn't exist.")
                 }
                 result.previous != result.new -> {
-                    description("Updated command `$prefix${result.new.name}`\n\n${getCommandDescription(result.new)}")
+                    displayCommandDescription("Updated command $prefix", result.new)
                 }
                 else -> {
-                    description(
-                        "No changes made to command `$prefix${result.new.name}`\n\n${
-                            getCommandDescription(
-                                result.new
-                            )
-                        }"
-                    )
+                    displayCommandDescription("No changes made to command $prefix", result.new)
                 }
             }
         }

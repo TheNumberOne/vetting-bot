@@ -74,9 +74,13 @@ class CommandListener(
                 ?: e.errorResponse.nullable?.fields?.get("after") as? String
                 ?: e.status.reasonPhrase()
                 ?: "Unknown discord error."
+            val response = e.errorResponse.nullable?.fields?.toString()
             event.respondEmbed {
                 title("Discord Error")
                 description(message)
+                if (response != null) {
+                    field("Response", "```\n$response\n```")
+                }
                 color(Color.RED)
             }
         } catch (e: Exception) {
