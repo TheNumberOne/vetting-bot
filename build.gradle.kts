@@ -25,7 +25,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.36.0"
     kotlin("jvm") version "1.4.21"
     kotlin("plugin.spring") version "1.4.21"
-    id("com.google.cloud.tools.jib") version "2.7.0"
+    id("com.google.cloud.tools.jib") version "3.1.4"
 }
 
 group = "vettingbot"
