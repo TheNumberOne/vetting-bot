@@ -24,7 +24,7 @@ plugins {
     id("io.spring.dependency-management") version "1.0.10.RELEASE"
     id("com.github.ben-manes.versions") version "0.36.0"
     kotlin("jvm") version "1.4.21"
-    kotlin("plugin.spring") version "1.4.21"
+    kotlin("plugin.spring") version "1.7.10"
     id("com.google.cloud.tools.jib") version "2.7.0"
 }
 
